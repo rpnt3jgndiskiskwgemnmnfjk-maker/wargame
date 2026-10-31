@@ -80,7 +80,7 @@ interface TokenType {
      | 'ADA' | 'SHIP';
   move: number;                  // 移動力
   acq?: { range: number; tries: number; bonus: number }; // 捕捉能力
-  acqDifficulty: number;         // 裏面の値（例 2）。仕様書 U2
+  acqDifficulty: number;         // 裏面の値。仕様書 §11.1（戦闘機1、第5世代2、AEW・爆撃機3 など）
   air?: WeaponProfile;           // 対空（ミサイルのアイコン）
   surface?: WeaponProfile;       // 対地・対水上（爆弾のアイコン）
   missileDefense?: { wez: number };
@@ -358,8 +358,8 @@ function rollD4(rng: Rng, mode: Mode, bonus = 0) {
 
 ```ts
 interface RuleVariant {
-  cyberThresholds: [number, number, number, number]; // U1：ファン版互換なら [1,2,3,4]（0→1, 1→2, 2→3, 3→4）
-  initiativeWinner: 'choosesOrder' | 'alwaysFirst';  // U7：既定値は S1 に合わせて choosesOrder
+  cyberThresholds: [number, number, number, number]; // U1：確定値 [1,2,3,4]（0→1, 1→2, 2→3, 3→4。必要な出目＝現在値＋1）
+  initiativeWinner: 'choosesOrder' | 'alwaysFirst';  // U7：確定値 choosesOrder（勝者が先攻・後攻を選ぶ）
   shipHp: number;                                    // U5：既定値 1、ファン版互換なら 3
   airbaseDamageBlockVP: number;                      // U4
   persistAttrition: boolean;                         // U9：既定値 true
