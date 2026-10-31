@@ -48,17 +48,20 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
         Surface(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 val game = ui.game
-                when {
-                    ui.screen == Screen.HOME || game == null -> HomeScreen(vm.engine) { vm.newHotseatGame("C1") }
-                    ui.screen == Screen.HANDOFF -> HandoffScreen(ui.holder, vm::confirmHandoff)
-                    ui.screen == Screen.RESULT -> ResultScreen(vm.engine.viewFor(game, ui.holder), vm::backToHome)
-                    else -> PlayScreen(
-                        view = vm.engine.viewFor(game, ui.holder),
-                        selectedTokenId = ui.selectedTokenId,
-                        error = ui.error,
-                        onSelect = vm::select,
-                        onAct = vm::act,
-                    )
+                if (game == null || ui.screen == Screen.HOME) {
+                    HomeScreen(vm.engine) { vm.newHotseatGame("C1") }
+                } else {
+                    when (ui.screen) {
+                        Screen.HANDOFF -> HandoffScreen(ui.holder, vm::confirmHandoff)
+                        Screen.RESULT -> ResultScreen(vm.engine.viewFor(game, ui.holder), vm::backToHome)
+                        else -> PlayScreen(
+                            view = vm.engine.viewFor(game, ui.holder),
+                            selectedTokenId = ui.selectedTokenId,
+                            error = ui.error,
+                            onSelect = vm::select,
+                            onAct = vm::act,
+                        )
+                    }
                 }
             }
         }
