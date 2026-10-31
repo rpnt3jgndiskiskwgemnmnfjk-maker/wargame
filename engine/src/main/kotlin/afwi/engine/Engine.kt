@@ -2,6 +2,7 @@ package afwi.engine
 
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.random.Random
 
 /**
  * ルールエンジン。状態は変更せず、apply が新しい状態を返す。
@@ -16,25 +17,33 @@ class Engine(
         val campaign = content.campaign(campaignId)
         val tokens = LinkedHashMap<String, TokenState>()
         val squadrons = LinkedHashMap<String, SquadronState>()
+        val fixed = campaign.fixedSquadrons.isNotEmpty()
+        val shuffle = Random(seed)
         for (side in Side.entries) {
-            // ID は正体が分からない連番にする（相手に見える合法手や視点に ID が載るため）
-            campaign.fixedSquadrons[side].orEmpty().forEachIndexed { n, defId ->
+            val defIds = if (fixed) {
+                campaign.fixedSquadrons[side].orEmpty()
+            } else {
+                content.squadrons.filter { it.side == side }.map { it.id }
+            }
+            // ID から正体が分からないよう、対局ごとに並びを混ぜてから連番を振る
+            // （相手に見える合法手や視点に ID が載るため）
+            defIds.shuffled(shuffle).forEachIndexed { n, defId ->
                 val def = content.squadron(defId)
                 require(def.side == side) { "$defId is not a ${side.name} squadron" }
                 val sqId = "${side.name}-S${n + 1}"
-                squadrons[sqId] = SquadronState(id = sqId, defId = defId, owner = side)
+                squadrons[sqId] = SquadronState(id = sqId, defId = defId, owner = side, drafted = fixed)
                 repeat(def.count) { i ->
                     val id = "$sqId-T${i + 1}"
                     tokens[id] = TokenState(id = id, typeId = def.tokenType, owner = side, squadronId = sqId)
                 }
             }
         }
-        val start = "キャンペーン「${campaign.nameJa}」開始(ATO ${1}/${campaign.atoCount})"
-        return GameState(
+        val start = "キャンペーン「${campaign.nameJa}」開始(ATO 1/${campaign.atoCount})"
+        val initial = GameState(
             campaignId = campaignId,
             ato = 1,
             atoCount = campaign.atoCount,
-            phase = Phase.DEPLOY,
+            phase = Phase.POSTURE,
             players = Side.entries.associateWith { PlayerState(side = it, mission = campaign.mission) },
             tokens = tokens,
             squadrons = squadrons,
@@ -42,10 +51,26 @@ class Engine(
             rngState = seed,
             log = listOf(GameEvent(Side.entries.associateWith { start })),
         )
+        // 選択肢が1つしかない手順（態勢が固定、飛行隊が固定など）は自動で進める
+        return Work(initial).also { it.beginAtoSetup() }.toState()
     }
+
+    /** その陣営がこの ATO で選べる態勢。標準以外は一度使うと選べない。 */
+    fun postureChoices(campaign: CampaignDef, player: PlayerState): List<PostureDef> =
+        content.postures.filter { p ->
+            p.side == player.side &&
+                (campaign.allowedPostures == null || p.kind in campaign.allowedPostures) &&
+                (p.kind == PostureKind.STANDARD || p.id !in player.usedPostures)
+        }
+
+    /** その飛行隊にまだ使える（撃破されていない）機体が残っているか。 */
+    private fun hasLiveTokens(s: GameState, squadronId: String): Boolean =
+        s.tokens.values.any { it.squadronId == squadronId && !it.isDestroyed }
 
     /** いま行動を求められている陣営。秘密裏に同時に決める場面では両方になる。 */
     fun actors(s: GameState): Set<Side> = when (s.phase) {
+        Phase.POSTURE -> Side.entries.filter { s.player(it).posture == null }.toSet()
+        Phase.DRAFT -> Side.entries.filter { !s.player(it).drafted }.toSet()
         Phase.DEPLOY -> Side.entries.filter { !s.player(it).deployed }.toSet()
         Phase.BID -> Side.entries.filter { s.player(it).bid == null }.toSet()
         Phase.CHOOSE_ORDER -> setOfNotNull(s.initiativeWinner)
@@ -56,8 +81,11 @@ class Engine(
     fun legalActions(s: GameState, side: Side): List<Action> {
         if (side !in actors(s)) return emptyList()
         return when (s.phase) {
+            Phase.POSTURE -> postureChoices(content.campaign(s.campaignId), s.player(side))
+                .map { Action.ChoosePosture(side, it.id) }
+            Phase.DRAFT -> draftOptions(s, side)
             Phase.DEPLOY -> deployOptions(s, side)
-            // M1 は支援カードがないため、差し出す枚数は 0 だけ
+            // 支援カードは M3 で実装するため、差し出す枚数は 0 だけ
             Phase.BID -> listOf(Action.SubmitBid(side, 0))
             Phase.CHOOSE_ORDER -> Side.entries.map { Action.ChooseFirst(side, it) }
             Phase.TURNS -> turnActions(s, side)
@@ -69,6 +97,8 @@ class Engine(
         require(action in legalActions(s, action.side)) { "illegal action: $action" }
         val w = Work(s)
         when (action) {
+            is Action.ChoosePosture -> w.choosePosture(action)
+            is Action.Draft -> w.draft(action)
             is Action.Deploy -> w.deploy(action)
             is Action.SubmitBid -> w.bid(action)
             is Action.ChooseFirst -> w.chooseFirst(action)
@@ -118,9 +148,27 @@ class Engine(
 
     // ---- 合法手 ----
 
+    private fun draftOptions(s: GameState, side: Side): List<Action> {
+        val posture = content.posture(s.player(side).posture ?: return emptyList())
+        val available = s.squadrons.values
+            .filter { it.owner == side && !it.isDestroyed && hasLiveTokens(s, it.id) }
+            .filter { PostureEffect.FLYING_ONLY !in posture.effects || content.squadron(it.defId).flying }
+            .map { it.id }
+        val (free, normal) = available.partition { id -> s.squadrons.getValue(id).defId in posture.freeSquadrons }
+        val normalSets = combinations(normal, posture.squadronLimit)
+        val freeSets = combinations(free, free.size)
+        return normalSets.flatMap { a -> freeSets.map { b -> Action.Draft(side, (a + b).toSet()) } }
+    }
+
+    fun clAllowed(s: GameState, side: Side): Boolean {
+        if (side != Side.US) return false
+        val posture = s.player(side).posture?.let { content.posture(it) }
+        return posture == null || PostureEffect.NO_CL !in posture.effects
+    }
+
     private fun deployOptions(s: GameState, side: Side): List<Action> {
-        val ids = s.squadrons.values.filter { it.owner == side }.map { it.id }
-        val choices = if (side == Side.US) listOf(BaseKind.AIRBASE, BaseKind.CL) else listOf(BaseKind.AIRBASE)
+        val ids = s.squadrons.values.filter { it.owner == side && it.drafted }.map { it.id }
+        val choices = if (clAllowed(s, side)) listOf(BaseKind.AIRBASE, BaseKind.CL) else listOf(BaseKind.AIRBASE)
         var combos = listOf(emptyMap<String, BaseKind>())
         for (id in ids) combos = combos.flatMap { m -> choices.map { m + (id to it) } }
         return combos.map { Action.Deploy(side, it) }
@@ -140,7 +188,7 @@ class Engine(
     }
 
     private fun activationOptions(s: GameState, side: Side): List<Action> =
-        s.squadrons.values.filter { it.owner == side && !it.isDestroyed }.flatMap { sq ->
+        s.squadrons.values.filter { it.owner == side && it.drafted && !it.isDestroyed }.flatMap { sq ->
             val def = content.squadron(sq.defId)
             val ready = readyOnCard(s, sq.id)
             val canActivate = when {
@@ -194,7 +242,7 @@ class Engine(
                     .forEach { out += Action.ShootToken(side, tok.id, it.id) }
                 // 基地と CL 上のものは捕捉なしで攻撃できる
                 if (distance(from, enemy.baseCoord) <= w.range) {
-                    s.squadrons.values.filter { it.owner == enemy && !it.isDestroyed }
+                    s.squadrons.values.filter { it.owner == enemy && it.drafted && !it.isDestroyed }
                         .forEach { out += Action.StrikeSquadron(side, tok.id, it.id) }
                     s.tokens.values.filter { it.owner == enemy && it.zone == Zone.AtBase }
                         .forEach { out += Action.ShootToken(side, tok.id, it.id) }
@@ -233,6 +281,7 @@ class Engine(
 
     private inner class Work(s: GameState) {
         private val campaignId = s.campaignId
+        private val campaign = content.campaign(s.campaignId)
         private var ato = s.ato
         private val atoCount = s.atoCount
         private var phase = s.phase
@@ -241,6 +290,7 @@ class Engine(
         private val squadrons = LinkedHashMap(s.squadrons)
         private var turn = s.turn
         private var initiativeWinner = s.initiativeWinner
+        private var initiativeHistory = s.initiativeHistory
         private var winner = s.winner
         private var gameOverReason = s.gameOverReason
         private val rng = Rng(s.rngState)
@@ -249,7 +299,7 @@ class Engine(
         fun toState() = GameState(
             campaignId = campaignId, ato = ato, atoCount = atoCount, phase = phase,
             players = players.toMap(), tokens = LinkedHashMap(tokens), squadrons = LinkedHashMap(squadrons),
-            turn = turn, initiativeWinner = initiativeWinner, winner = winner,
+            turn = turn, initiativeWinner = initiativeWinner, initiativeHistory = initiativeHistory, winner = winner,
             gameOverReason = gameOverReason, rngState = rng.state, log = log.toList(),
         )
 
@@ -275,6 +325,58 @@ class Engine(
 
         // ---- 準備 ----
 
+        /** ATO の準備を始める。選択肢が1つしかない手順は自動で済ませる。 */
+        fun beginAtoSetup() {
+            phase = Phase.POSTURE
+            for (side in Side.entries) {
+                val choices = postureChoices(campaign, p(side))
+                if (choices.size == 1) updatePlayer(side) { it.copy(posture = choices.single().id) }
+            }
+            if (Side.entries.all { p(it).posture != null }) revealPostures() else publicEvent("態勢の選択へ")
+        }
+
+        fun choosePosture(a: Action.ChoosePosture) {
+            updatePlayer(a.side) { it.copy(posture = a.postureId) }
+            event { v -> if (v == a.side) "態勢「${content.posture(a.postureId).nameJa}」を選んだ" else "${Ja.side(a.side)}が態勢を選んだ" }
+            if (Side.entries.all { p(it).posture != null }) revealPostures()
+        }
+
+        private fun revealPostures() {
+            for (side in Side.entries) {
+                val posture = content.posture(p(side).posture!!)
+                updatePlayer(side) { it.copy(usedPostures = it.usedPostures + posture.id) }
+                publicEvent("${Ja.side(side)}の態勢: ${posture.nameJa}(飛行隊${posture.squadronLimit}・支援カード${posture.enablerLimit})")
+                if (PostureEffect.GENERATE_ADA in posture.effects && posture.adaTokenType != null) {
+                    val id = "${side.name}-P$ato"
+                    tokens[id] = TokenState(id = id, typeId = posture.adaTokenType, owner = side, squadronId = null, zone = Zone.AtBase)
+                    publicEvent("${Ja.side(side)}の基地に防空部隊が展開した")
+                }
+            }
+            if (campaign.fixedSquadrons.isNotEmpty()) {
+                for (side in Side.entries) updatePlayer(side) { it.copy(drafted = true) }
+                phase = Phase.DEPLOY
+            } else {
+                phase = Phase.DRAFT
+                publicEvent("飛行隊の選択へ")
+            }
+        }
+
+        fun draft(a: Action.Draft) {
+            for (id in a.squadronIds) squadrons[id] = squadrons.getValue(id).copy(drafted = true, base = BaseKind.AIRBASE)
+            updatePlayer(a.side) { it.copy(drafted = true) }
+            event { v ->
+                if (v == a.side) {
+                    "参加させる飛行隊: " + a.squadronIds.joinToString("、") { content.squadron(squadrons.getValue(it).defId).nameJa }
+                } else {
+                    "${Ja.side(a.side)}が飛行隊${a.squadronIds.size}枚を選んだ"
+                }
+            }
+            if (Side.entries.all { p(it).drafted }) {
+                phase = Phase.DEPLOY
+                publicEvent("飛行隊の配置へ")
+            }
+        }
+
         fun deploy(a: Action.Deploy) {
             for ((id, base) in a.placements) squadrons[id] = squadrons.getValue(id).copy(base = base)
             updatePlayer(a.side) { it.copy(deployed = true) }
@@ -288,7 +390,14 @@ class Engine(
                     "${Ja.side(a.side)}が飛行隊カード${a.placements.size}枚を伏せて配置(うちCL ${cl}枚)"
                 }
             }
-            if (Side.entries.all { p(it).deployed }) {
+            if (Side.entries.all { p(it).deployed }) enterInitiative()
+        }
+
+        private fun enterInitiative() {
+            if (campaign.bidRule == BidRule.FIRST_ATO_ONLY_ALTERNATE && initiativeHistory.isNotEmpty()) {
+                // 大会: 第2 ATO 以降は、前の ATO で主導権を持たなかった側が主導権を持つ
+                grantInitiative(initiativeHistory.last().opponent, "大会のルールで主導権が移った")
+            } else {
                 phase = Phase.BID
                 publicEvent("主導権の入札へ")
             }
@@ -313,8 +422,14 @@ class Engine(
                 }
                 publicEvent("同点のため振り直し")
             }
+            grantInitiative(won, "入札に勝った")
+        }
+
+        /** 主導権を与える：先攻の決定権、サイバー判定1回、情報優位。続いて両者が情報判定。 */
+        private fun grantInitiative(won: Side, reason: String) {
             initiativeWinner = won
-            publicEvent("${Ja.side(won)}が主導権を得た")
+            initiativeHistory = initiativeHistory + won
+            publicEvent("${Ja.side(won)}が主導権を得た($reason)")
             updatePlayer(won) { it.copy(intel = IntelLevel.ADVANTAGE) }
             updatePlayer(won.opponent) { it.copy(intel = IntelLevel.NORMAL) }
             cyberAttempt(won, "主導権の獲得")
@@ -322,7 +437,7 @@ class Engine(
             for (side in Side.entries) {
                 val mode = if (p(side).intel == IntelLevel.ADVANTAGE) RollMode.ADVANTAGE else RollMode.NORMAL
                 val r = rng.roll(mode)
-                // M1 は支援カードがないため、見られるカードはない
+                // 支援カードは M3 で実装するため、見られるカードはない
                 publicEvent("${Ja.side(side)}の情報判定: ${r.describe()}(相手の支援カードは0枚)")
             }
             phase = Phase.CHOOSE_ORDER
@@ -397,7 +512,11 @@ class Engine(
             if (!sq.faceUp) {
                 squadrons[sq.id] = sq.copy(faceUp = true)
                 publicEvent("${Ja.side(a.side)}が${def.nameJa}($tname)を起動(${Ja.base(sq.base)})")
-                if (sq.base == BaseKind.CL) {
+                val maxGeneration = p(a.side).posture
+                    ?.let { PostureEffect.CL_MAX_GENERATION in content.posture(it).effects } == true
+                if (sq.base == BaseKind.CL && maxGeneration) {
+                    publicEvent("態勢の効果で CL から全機が発進")
+                } else if (sq.base == BaseKind.CL) {
                     val r = rng.roll()
                     val n = min(r.total, ready.size)
                     publicEvent("CLからの発進判定: ${r.describe()} → ${n}機が発進、${ready.size - n}機はこのATOでは発進できない")
@@ -446,14 +565,15 @@ class Engine(
             val st = type(shooter)
             val weapon = (if (type(target).cls.isAircraft) st.air else st.surface)
                 ?: error("no weapon for target")
-            val r = rng.roll(attackMode())
-            val hit = r.total >= weapon.hit
             val onGround = target.zone == Zone.AtBase
+            val mode = if (onGround) surfaceMode(target.owner, airbaseTarget = true) else RollMode.NORMAL
+            val r = rng.roll(mode)
+            val hit = r.total >= weapon.hit
             event { v ->
                 "${label(shooter, v)}が${label(target, v)}を射撃: ${r.describe()}、必要${weapon.hit}以上 → ${if (hit) "命中" else "外れ"}"
             }
             if (hit) {
-                val damage = if (weapon.explosive) damageRoll() else 1
+                val damage = if (weapon.explosive) damageRoll(mode) else 1
                 damageToken(target.id, damage, by = a.side, onGround = onGround)
             }
             applyWinchester(shooter.id, r.natural)
@@ -464,7 +584,8 @@ class Engine(
             val shooter = tokens.getValue(a.tokenId)
             val weapon = type(shooter).surface ?: error("no surface weapon")
             val sq = squadrons.getValue(a.squadronId)
-            val r = rng.roll(attackMode())
+            val mode = surfaceMode(sq.owner, airbaseTarget = sq.base == BaseKind.AIRBASE)
+            val r = rng.roll(mode)
             val hit = r.total >= weapon.hit
             event { v ->
                 val name = if (sq.faceUp || v == sq.owner) content.squadron(sq.defId).nameJa else "伏せた飛行隊"
@@ -472,8 +593,8 @@ class Engine(
                     "${r.describe()}、必要${weapon.hit}以上 → ${if (hit) "命中" else "外れ"}"
             }
             if (hit) {
-                val damage = if (weapon.explosive) damageRoll() else 1
-                damageSquadron(sq.id, damage, by = a.side)
+                val damage = if (weapon.explosive) damageRoll(mode) else 1
+                distributeBaseDamage(sq.id, damage, by = a.side)
             }
             applyWinchester(shooter.id, r.natural)
         }
@@ -483,20 +604,29 @@ class Engine(
             val shooter = tokens.getValue(a.tokenId)
             val weapon = type(shooter).surface ?: error("no surface weapon")
             val enemy = a.side.opponent
-            val r = rng.roll(attackMode())
+            val mode = surfaceMode(enemy, airbaseTarget = true)
+            val r = rng.roll(mode)
             val hit = r.total >= weapon.hit
             event { v ->
                 "${label(shooter, v)}が${Ja.side(enemy)}の基地施設を攻撃: ${r.describe()}、必要${weapon.hit}以上 → ${if (hit) "命中" else "外れ"}"
             }
-            if (hit) hitAirbaseBlocks(enemy, if (weapon.explosive) damageRoll() else 1, by = a.side)
+            if (hit) hitAirbaseBlocks(enemy, if (weapon.explosive) damageRoll(mode) else 1, by = a.side)
             applyWinchester(shooter.id, r.natural)
         }
 
-        /** 有利・不利の要因を集めて1回だけ決める。M1 には要因がない（態勢・ADA・カードは M2 以降）。 */
-        private fun attackMode(): RollMode = resolveMode(advantage = false, disadvantage = false)
+        /**
+         * 基地・CL 上の目標への攻撃の有利・不利。要因を集めて1回だけ決める。
+         * 防空（ADA）が基地にいると、その交戦域内の目標への命中・損害判定は常に不利。
+         * ACE 態勢の陣営の Airbase への攻撃も不利。支援カードの要因は M3 で加える。
+         */
+        private fun surfaceMode(defender: Side, airbaseTarget: Boolean): RollMode {
+            val reasons = baseDefenseReasons(defender, airbaseTarget, tokens.values, p(defender).posture)
+            if (reasons.isNotEmpty()) publicEvent("不利の要因: ${reasons.joinToString("、")}")
+            return resolveMode(advantage = false, disadvantage = reasons.isNotEmpty())
+        }
 
-        private fun damageRoll(): Int {
-            val r = rng.roll()
+        private fun damageRoll(mode: RollMode): Int {
+            val r = rng.roll(mode)
             publicEvent("損害判定(爆発ダイス): ${r.describe()} → ${r.total}点")
             return r.total
         }
@@ -548,7 +678,27 @@ class Engine(
             publicEvent("${Ja.side(tok.owner)}${t.nameJa}を撃破")
         }
 
-        private fun damageSquadron(id: String, amount: Int, by: Side) {
+        /**
+         * 基地・CL への損害を割り振る。目標の飛行隊を先に、余りは同じ Airbase の他の飛行隊（損害の多い順）、
+         * さらに余れば基地施設へ。CL は目標の飛行隊1枚だけ（余りは失われる）。
+         * 本来は攻撃側が割り振るが、撃破を優先する割り振りを自動で行う。
+         */
+        private fun distributeBaseDamage(targetId: String, amount: Int, by: Side) {
+            val target = squadrons.getValue(targetId)
+            var left = damageSquadron(targetId, amount, by)
+            if (target.base != BaseKind.AIRBASE) return
+            val others = squadrons.values
+                .filter { it.owner == target.owner && it.drafted && !it.isDestroyed && it.base == BaseKind.AIRBASE && it.id != targetId }
+                .sortedByDescending { it.damage }
+            for (other in others) {
+                if (left <= 0) break
+                left = damageSquadron(other.id, left, by)
+            }
+            if (left > 0) hitAirbaseBlocks(target.owner, left, by)
+        }
+
+        /** 飛行隊に損害を与え、使い切れなかった損害を返す。 */
+        private fun damageSquadron(id: String, amount: Int, by: Side): Int {
             val sq = squadrons.getValue(id)
             val remaining = SquadronState.SQUADRON_HP - sq.damage
             val applied = min(amount, remaining)
@@ -567,9 +717,7 @@ class Engine(
             } else {
                 publicEvent("${Ja.side(sq.owner)}の${name}に損害$applied(あと${SquadronState.SQUADRON_HP - updated.damage}命中で撃破)")
             }
-            // 余った損害は基地施設へ（攻撃側が割り振る正式な手順は M2 で実装する）
-            val leftover = amount - applied
-            if (leftover > 0 && sq.base == BaseKind.AIRBASE) hitAirbaseBlocks(sq.owner, leftover, by)
+            return amount - applied
         }
 
         private fun hitAirbaseBlocks(owner: Side, amount: Int, by: Side) {
@@ -609,17 +757,24 @@ class Engine(
             if (ato < atoCount) startNextAto() else finishGame()
         }
 
-        /** 次の ATO へ（態勢とドラフトは M2 で実装する）。損耗は持ち越す。 */
+        /** 次の ATO へ。盤上を片付けるが、撃破された飛行隊と機体（損耗）は持ち越す。 */
         private fun startNextAto() {
             ato += 1
-            for (tok in tokens.values.filter { !it.isDestroyed }) {
-                tokens[tok.id] = tok.copy(zone = Zone.Grounded, acquired = false, winchester = false, unavailable = false, salvosUsed = 0)
+            for (tok in tokens.values.filter { !it.isDestroyed && it.zone != Zone.Offboard }) {
+                // 態勢で発生させた防空など、飛行隊に属さない駒は片付ける
+                val zone = if (tok.squadronId == null) Zone.Offboard else Zone.Grounded
+                tokens[tok.id] = tok.copy(zone = zone, acquired = false, winchester = false, unavailable = false, salvosUsed = 0)
             }
-            for (sq in squadrons.values) squadrons[sq.id] = sq.copy(faceUp = false)
-            for (side in Side.entries) updatePlayer(side) { it.copy(deployed = false, bid = null) }
+            val fixed = campaign.fixedSquadrons.isNotEmpty()
+            for (sq in squadrons.values) {
+                squadrons[sq.id] = sq.copy(faceUp = false, drafted = fixed && !sq.isDestroyed, base = BaseKind.AIRBASE)
+            }
+            for (side in Side.entries) {
+                updatePlayer(side) { it.copy(posture = null, drafted = false, deployed = false, bid = null) }
+            }
             initiativeWinner = null
-            phase = Phase.DEPLOY
             publicEvent("ATO $ato/$atoCount 開始")
+            beginAtoSetup()
         }
 
         private fun finishGame() {
@@ -644,6 +799,35 @@ class Engine(
     private companion object {
         val HIGH_VALUE = setOf(VpClass.SHIP, VpClass.BOMBER, VpClass.ADA, VpClass.AEW)
     }
+}
+
+/**
+ * 基地・CL 上の目標への攻撃が不利になる理由。エンジンの判定と、画面・AI の見積もりで共用する。
+ * tokens には防御側の基地上の駒が含まれていればよい（防空の駒は基地上なら相手からも存在が見える）。
+ */
+fun Engine.baseDefenseReasons(
+    defender: Side,
+    airbaseTarget: Boolean,
+    tokens: Collection<TokenState>,
+    defenderPosture: String?,
+): List<String> = buildList {
+    if (tokens.any { it.owner == defender && it.zone == Zone.AtBase && tokenType(it).cls == TokenClass.ADA }) {
+        add("防空の交戦域内")
+    }
+    val ace = defenderPosture?.let { PostureEffect.AIRBASE_STRIKES_DISADVANTAGE in content.posture(it).effects } == true
+    if (airbaseTarget && ace) add("${Ja.side(defender)}の態勢(ACE)")
+}
+
+/** 大きさ 0〜maxSize の組み合わせ（重複なし）。ドラフトの候補で使う。 */
+internal fun <T> combinations(items: List<T>, maxSize: Int): List<List<T>> {
+    val out = mutableListOf<List<T>>()
+    fun go(start: Int, current: List<T>) {
+        out += current
+        if (current.size == maxSize) return
+        for (i in start until items.size) go(i + 1, current + items[i])
+    }
+    go(0, emptyList())
+    return out
 }
 
 /** 重複を許す組み合わせ（大きさ 1〜maxSize）。AEW の2回捕捉で使う。 */

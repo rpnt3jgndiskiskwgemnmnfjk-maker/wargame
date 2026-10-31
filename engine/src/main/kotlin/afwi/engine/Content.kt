@@ -79,13 +79,66 @@ enum class MissionId {
 }
 
 @Serializable
+enum class PostureKind { STANDARD, ACE, SURGE, HEDGEHOG, STANDOFF, PLAAF, JOINT_OPERATIONS, ADA }
+
+@Serializable
+enum class PostureEffect {
+    /** 自軍 Airbase への攻撃はすべて不利（ACE）。 */
+    AIRBASE_STRIKES_DISADVANTAGE,
+
+    /** CL からの発進で D4 を振らず全機発進（ACE）。 */
+    CL_MAX_GENERATION,
+
+    /** CL を使えない（SURGE）。 */
+    NO_CL,
+
+    /** 防空（ADA）の駒を1個、基地に発生させる（HEDGEHOG）。 */
+    GENERATE_ADA,
+
+    /** 飛行部隊の飛行隊だけを選べる（JOINT OPERATIONS）。 */
+    FLYING_ONLY,
+
+    /** 支援カードは空軍（PLAAF）のものだけ（M3 で使う）。 */
+    PLAAF_ENABLERS_ONLY,
+}
+
+@Serializable
+data class PostureDef(
+    val id: String,
+    val side: Side,
+    val kind: PostureKind,
+    val nameJa: String,
+    val descriptionJa: String,
+    val squadronLimit: Int,
+    val enablerLimit: Int,
+    /** 上限に数えずに選べる飛行隊。 */
+    val freeSquadrons: List<String> = emptyList(),
+    val effects: List<PostureEffect> = emptyList(),
+    /** HEDGEHOG で発生させる防空の機種。 */
+    val adaTokenType: String? = null,
+)
+
+@Serializable
+enum class BidRule {
+    /** ATO ごとに入札する。 */
+    EVERY_ATO,
+
+    /** 入札は第1 ATO だけで、支援カードを差し出せない。以後は主導権を交互に持つ（大会）。 */
+    FIRST_ATO_ONLY_ALTERNATE,
+}
+
+@Serializable
 data class CampaignDef(
     val id: String,
     val nameJa: String,
     val descriptionJa: String,
     val atoCount: Int,
     val mission: MissionId,
-    val fixedSquadrons: Map<Side, List<String>>,
+    /** 空でなければ、ドラフトせずにこの飛行隊で戦う（遭遇戦）。 */
+    val fixedSquadrons: Map<Side, List<String>> = emptyMap(),
+    /** 選べる態勢の種類。null ならすべて。 */
+    val allowedPostures: List<PostureKind>? = null,
+    val bidRule: BidRule = BidRule.EVERY_ATO,
 )
 
 @Serializable
@@ -94,14 +147,17 @@ data class Content(
     val tokenTypes: List<TokenType>,
     val squadrons: List<SquadronDef>,
     val campaigns: List<CampaignDef>,
+    val postures: List<PostureDef> = emptyList(),
 ) {
     private val tokenTypeById by lazy { tokenTypes.associateBy { it.id } }
     private val squadronById by lazy { squadrons.associateBy { it.id } }
     private val campaignById by lazy { campaigns.associateBy { it.id } }
+    private val postureById by lazy { postures.associateBy { it.id } }
 
     fun tokenType(id: String): TokenType = tokenTypeById[id] ?: error("unknown token type: $id")
     fun squadron(id: String): SquadronDef = squadronById[id] ?: error("unknown squadron: $id")
     fun campaign(id: String): CampaignDef = campaignById[id] ?: error("unknown campaign: $id")
+    fun posture(id: String): PostureDef = postureById[id] ?: error("unknown posture: $id")
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true }

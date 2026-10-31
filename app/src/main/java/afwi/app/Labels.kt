@@ -29,10 +29,23 @@ fun squadronName(v: PlayerView, id: String): String {
     return "${Ja.side(sq.owner)}の$name"
 }
 
-/** 出目 need 以上が出る確率（D4、修正なし）。 */
-fun successPercent(need: Int): Int = ((5 - need).coerceIn(0, 4) * 25)
+/** 出目 need 以上が出る確率（D4）。不利なら2個振って低い方。 */
+fun successPercent(need: Int, disadvantage: Boolean = false): Int {
+    val p = (5 - need).coerceIn(0, 4) / 4.0
+    return ((if (disadvantage) p * p else p) * 100).toInt()
+}
 
-fun describe(a: Action, v: PlayerView): String = when (a) {
+/** 相手の基地・CL への攻撃が不利になる理由（画面表示用）。 */
+private fun defenseNote(v: PlayerView, base: afwi.engine.BaseKind): Pair<Boolean, String> {
+    val reasons = v.baseDefense[v.opponent.side]?.get(base).orEmpty()
+    return if (reasons.isEmpty()) false to "" else true to " 不利:${reasons.joinToString("・")}"
+}
+
+fun describe(a: Action, v: PlayerView, engine: afwi.engine.Engine): String = when (a) {
+    is Action.ChoosePosture -> engine.content.posture(a.postureId).let {
+        "${it.nameJa}(飛行隊${it.squadronLimit}・支援カード${it.enablerLimit}): ${it.descriptionJa}"
+    }
+    is Action.Draft -> "参加: " + a.squadronIds.joinToString("、") { squadronName(v, it) }
     is Action.Deploy -> a.placements.entries.joinToString("、") { (id, base) -> "${squadronName(v, id)} → ${Ja.base(base)}" }
     is Action.SubmitBid -> "入札する(差し出す支援カード ${a.sacrifice}枚)"
     is Action.ChooseFirst -> "${Ja.side(a.first)}を先攻にする"
@@ -51,15 +64,21 @@ fun describe(a: Action, v: PlayerView): String = when (a) {
         val target = v.tokens.firstOrNull { it.id == a.targetId }
         val weapon = if (target?.type?.cls?.isAircraft == true) shooter.type?.air else shooter.type?.surface
         val need = weapon?.hit ?: 0
-        "射撃: ${tokenName(v, a.targetId)} 命中${need}+(${successPercent(need)}%)"
+        val (dis, note) = if (target?.zone == afwi.engine.Zone.AtBase) defenseNote(v, afwi.engine.BaseKind.AIRBASE) else (false to "")
+        "射撃: ${tokenName(v, a.targetId)} 命中${need}+(${successPercent(need, dis)}%)$note"
     }
     is Action.StrikeSquadron -> {
-        val need = v.tokens.first { it.id == a.tokenId }.type?.surface?.hit ?: 0
-        "攻撃: ${squadronName(v, a.squadronId)} 命中${need}+(${successPercent(need)}%)"
+        val weapon = v.tokens.first { it.id == a.tokenId }.type?.surface
+        val need = weapon?.hit ?: 0
+        val base = v.squadrons.firstOrNull { it.id == a.squadronId }?.base ?: afwi.engine.BaseKind.AIRBASE
+        val (dis, note) = defenseNote(v, base)
+        val boom = if (weapon?.explosive == true) " 命中で損害D4" else ""
+        "攻撃: ${squadronName(v, a.squadronId)}(${Ja.base(base)}) 命中${need}+(${successPercent(need, dis)}%)$boom$note"
     }
     is Action.StrikeAirbaseBlock -> {
         val need = v.tokens.first { it.id == a.tokenId }.type?.surface?.hit ?: 0
-        "攻撃: ${Ja.side(v.opponent.side)}の基地施設 命中${need}+(${successPercent(need)}%)"
+        val (dis, note) = defenseNote(v, afwi.engine.BaseKind.AIRBASE)
+        "攻撃: ${Ja.side(v.opponent.side)}の基地施設 命中${need}+(${successPercent(need, dis)}%)$note"
     }
     is Action.EndTurn -> "手番を終える"
     is Action.Pass -> "パス(両者が続けてパスすると ATO 終了)"

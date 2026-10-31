@@ -8,10 +8,10 @@ import kotlin.test.assertTrue
 class AgentTest {
     private val engine = Engine()
 
-    private fun winRate(make: (Long) -> Map<Side, Agent>, side: Side, games: Int = 200): Double {
+    private fun winRate(make: (Long) -> Map<Side, Agent>, side: Side, games: Int = 200, campaign: String = "C1"): Double {
         var wins = 0
         repeat(games) { i ->
-            val r = Match.play(engine, "C1", seed = 10_000L + i, agents = make(i.toLong()))
+            val r = Match.play(engine, campaign, seed = 10_000L + i, agents = make(i.toLong()))
             assertTrue(r.finished, "game $i did not finish in ${r.steps} steps")
             if (r.winner == side) wins++
         }
@@ -50,5 +50,21 @@ class AgentTest {
         )
         println("normal vs easy: as US $rate / as PRC $rate2")
         assertTrue((rate + rate2) / 2 > 0.55, "normal vs easy ${(rate + rate2) / 2}")
+    }
+
+    @Test
+    fun `tournament games between AIs finish and normal AI beats a random player`() {
+        repeat(100) { i ->
+            val r = Match.play(
+                engine, "C2", seed = i.toLong(),
+                agents = mapOf(Side.US to HeuristicAgent(engine, seed = i.toLong()), Side.PRC to HeuristicAgent(engine, Difficulty.EASY, i.toLong())),
+            )
+            assertTrue(r.finished, "seed $i did not finish in ${r.steps} steps")
+        }
+        val usRate = winRate({ mapOf(Side.US to HeuristicAgent(engine, seed = it), Side.PRC to RandomAgent(it)) }, Side.US, 100, "C2")
+        val prcRate = winRate({ mapOf(Side.US to RandomAgent(it), Side.PRC to HeuristicAgent(engine, seed = it)) }, Side.PRC, 100, "C2")
+        println("C2 normal vs random: US $usRate / PRC $prcRate")
+        assertTrue(usRate >= 0.7, "US win rate $usRate")
+        assertTrue(prcRate >= 0.7, "PRC win rate $prcRate")
     }
 }

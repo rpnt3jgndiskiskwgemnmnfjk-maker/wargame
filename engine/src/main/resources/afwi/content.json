@@ -1,56 +1,600 @@
 {
   "version": 1,
   "tokenTypes": [
-    { "id": "F-22",    "nameJa": "F-22 ラプター",       "side": "US",  "cls": "FIGHTER_GEN5", "move": 2, "acqRange": 2, "acqBonus": 1, "acqValue": 2, "air": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "F-35A",   "nameJa": "F-35A ライトニングII", "side": "US",  "cls": "FIGHTER_GEN5", "move": 2, "acqRange": 2, "acqValue": 2, "air": { "range": 1, "hit": 2 }, "surface": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "F-15C",   "nameJa": "F-15C イーグル",       "side": "US",  "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "F-15E",   "nameJa": "F-15E ストライクイーグル", "side": "US", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 2 }, "surface": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "F-16C",   "nameJa": "F-16C ファイティングファルコン", "side": "US", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 3 }, "surface": { "range": 1, "hit": 3 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "MQ-9",    "nameJa": "MQ-9 リーパー",        "side": "US",  "cls": "UAS_ATTACK",   "move": 1, "acqRange": 2, "acqValue": 1, "surface": { "range": 1, "hit": 3 }, "winchester": "INFINITE", "vpClass": "OTHER" },
-    { "id": "RQ-4",    "nameJa": "RQ-4 グローバルホーク", "side": "US",  "cls": "UAS_RECON",    "move": 1, "acqRange": 2, "acqBonus": 1, "acqValue": 2, "winchester": "NONE", "vpClass": "OTHER" },
-    { "id": "E-3",     "nameJa": "E-3 セントリー",       "side": "US",  "cls": "AEW",          "move": 1, "acqRange": 3, "acqTries": 2, "acqBonus": 2, "acqValue": 3, "winchester": "NONE", "vpClass": "AEW" },
-    { "id": "EC-130",  "nameJa": "EC-130 コンパスコール", "side": "US",  "cls": "EW",           "move": 1, "acqRange": 3, "acqValue": 3, "winchester": "NONE", "vpClass": "AEW" },
-    { "id": "B-52H",   "nameJa": "B-52H ストラトフォートレス", "side": "US", "cls": "BOMBER", "move": 1, "acqRange": 2, "acqValue": 3, "surface": { "range": 6, "hit": 2, "explosive": true }, "winchester": "STANDARD", "vpClass": "BOMBER" },
-    { "id": "US-ADA",  "nameJa": "NASAMS 防空",          "side": "US",  "cls": "ADA",          "move": 0, "acqRange": 2, "acqValue": 2, "air": { "range": 2, "hit": 2 }, "winchester": "NONE", "wez": 2, "vpClass": "ADA" },
-    { "id": "US-DDG",  "nameJa": "アーレイ・バーク級駆逐艦", "side": "US", "cls": "SHIP", "move": 1, "acqRange": 2, "acqValue": 2, "air": { "range": 3, "hit": 2 }, "surface": { "range": 3, "hit": 2 }, "winchester": "SALVO", "salvos": 7, "wez": 3, "vpClass": "SHIP" },
-
-    { "id": "J-20",    "nameJa": "J-20 威龍",            "side": "PRC", "cls": "FIGHTER_GEN5", "move": 2, "acqRange": 2, "acqBonus": 1, "acqValue": 2, "air": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "J-16",    "nameJa": "J-16",                 "side": "PRC", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 2 }, "surface": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "J-10",    "nameJa": "J-10 猛龍",            "side": "PRC", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 3 }, "surface": { "range": 1, "hit": 3 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "JH-7",    "nameJa": "JH-7 飛豹",            "side": "PRC", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 3 }, "surface": { "range": 1, "hit": 3 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "J-15",    "nameJa": "J-15 飛鯊",            "side": "PRC", "cls": "FIGHTER_GEN4", "move": 2, "acqRange": 2, "acqValue": 1, "air": { "range": 1, "hit": 2 }, "surface": { "range": 1, "hit": 2 }, "winchester": "STANDARD", "vpClass": "OTHER" },
-    { "id": "TB-001",  "nameJa": "TB-001 双尾蠍",        "side": "PRC", "cls": "UAS_ATTACK",   "move": 1, "acqRange": 2, "acqValue": 1, "surface": { "range": 1, "hit": 3 }, "winchester": "INFINITE", "vpClass": "OTHER" },
-    { "id": "WX-10",   "nameJa": "WX-10 神雕",           "side": "PRC", "cls": "UAS_RECON",    "move": 1, "acqRange": 2, "acqBonus": 1, "acqValue": 2, "winchester": "NONE", "vpClass": "OTHER" },
-    { "id": "KJ-2000", "nameJa": "KJ-2000 空警2000",     "side": "PRC", "cls": "AEW",          "move": 1, "acqRange": 3, "acqTries": 2, "acqBonus": 2, "acqValue": 3, "winchester": "NONE", "vpClass": "AEW" },
-    { "id": "H-6K",    "nameJa": "H-6K 轟6",             "side": "PRC", "cls": "BOMBER",       "move": 1, "acqRange": 2, "acqValue": 3, "surface": { "range": 6, "hit": 2, "explosive": true }, "winchester": "STANDARD", "vpClass": "BOMBER" },
-    { "id": "HQ-9",    "nameJa": "HQ-9 紅旗9",           "side": "PRC", "cls": "ADA",          "move": 0, "acqRange": 2, "acqValue": 2, "air": { "range": 2, "hit": 2 }, "winchester": "NONE", "wez": 2, "vpClass": "ADA" },
-    { "id": "SA-21",   "nameJa": "SA-21 (S-400)",        "side": "PRC", "cls": "ADA",          "move": 0, "acqRange": 2, "acqValue": 2, "air": { "range": 4, "hit": 2 }, "winchester": "NONE", "wez": 4, "vpClass": "ADA" },
-    { "id": "PRC-DDG", "nameJa": "052D型駆逐艦",          "side": "PRC", "cls": "SHIP",         "move": 1, "acqRange": 2, "acqValue": 2, "air": { "range": 3, "hit": 2 }, "surface": { "range": 3, "hit": 2 }, "winchester": "SALVO", "salvos": 7, "wez": 3, "vpClass": "SHIP" },
-    { "id": "PRC-CG",  "nameJa": "055型駆逐艦",           "side": "PRC", "cls": "SHIP",         "move": 1, "acqRange": 2, "acqValue": 2, "air": { "range": 3, "hit": 2 }, "surface": { "range": 3, "hit": 2 }, "winchester": "SALVO", "salvos": 9, "wez": 3, "vpClass": "SHIP" },
-    { "id": "PRC-FAC", "nameJa": "022型ミサイル艇隊",      "side": "PRC", "cls": "SHIP",         "move": 1, "acqRange": 2, "acqValue": 2, "surface": { "range": 2, "hit": 3 }, "winchester": "SALVO", "salvos": 2, "vpClass": "SHIP" }
+    {
+      "id": "F-22",
+      "nameJa": "F-22 ラプター",
+      "side": "US",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-35A",
+      "nameJa": "F-35A ライトニングII",
+      "side": "US",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-15C",
+      "nameJa": "F-15C イーグル",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-15E",
+      "nameJa": "F-15E ストライクイーグル",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-16C",
+      "nameJa": "F-16C ファイティングファルコン",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "MQ-9",
+      "nameJa": "MQ-9 リーパー",
+      "side": "US",
+      "cls": "UAS_ATTACK",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 1,
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "INFINITE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "RQ-4",
+      "nameJa": "RQ-4 グローバルホーク",
+      "side": "US",
+      "cls": "UAS_RECON",
+      "move": 1,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "winchester": "NONE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "E-3",
+      "nameJa": "E-3 セントリー",
+      "side": "US",
+      "cls": "AEW",
+      "move": 1,
+      "acqRange": 3,
+      "acqTries": 2,
+      "acqBonus": 2,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "EC-130",
+      "nameJa": "EC-130 コンパスコール",
+      "side": "US",
+      "cls": "EW",
+      "move": 1,
+      "acqRange": 3,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "B-52H",
+      "nameJa": "B-52H ストラトフォートレス",
+      "side": "US",
+      "cls": "BOMBER",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 3,
+      "surface": {
+        "range": 6,
+        "hit": 2,
+        "explosive": true
+      },
+      "winchester": "STANDARD",
+      "vpClass": "BOMBER"
+    },
+    {
+      "id": "US-ADA",
+      "nameJa": "NASAMS 防空",
+      "side": "US",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 2,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 2,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "US-DDG",
+      "nameJa": "アーレイ・バーク級駆逐艦",
+      "side": "US",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 7,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "J-20",
+      "nameJa": "J-20 威龍",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-16",
+      "nameJa": "J-16",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-10",
+      "nameJa": "J-10 猛龍",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "JH-7",
+      "nameJa": "JH-7 飛豹",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-15",
+      "nameJa": "J-15 飛鯊",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "TB-001",
+      "nameJa": "TB-001 双尾蠍",
+      "side": "PRC",
+      "cls": "UAS_ATTACK",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 1,
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "INFINITE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "WX-10",
+      "nameJa": "WX-10 神雕",
+      "side": "PRC",
+      "cls": "UAS_RECON",
+      "move": 1,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "winchester": "NONE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "KJ-2000",
+      "nameJa": "KJ-2000 空警2000",
+      "side": "PRC",
+      "cls": "AEW",
+      "move": 1,
+      "acqRange": 3,
+      "acqTries": 2,
+      "acqBonus": 2,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "H-6K",
+      "nameJa": "H-6K 轟6",
+      "side": "PRC",
+      "cls": "BOMBER",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 3,
+      "surface": {
+        "range": 6,
+        "hit": 2,
+        "explosive": true
+      },
+      "winchester": "STANDARD",
+      "vpClass": "BOMBER"
+    },
+    {
+      "id": "HQ-9",
+      "nameJa": "HQ-9 紅旗9",
+      "side": "PRC",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 2,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 2,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "SA-21",
+      "nameJa": "SA-21 (S-400)",
+      "side": "PRC",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 4,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 4,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "PRC-DDG",
+      "nameJa": "052D型駆逐艦",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 7,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "PRC-CG",
+      "nameJa": "055型駆逐艦",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 9,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "PRC-FAC",
+      "nameJa": "022型ミサイル艇隊",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "surface": {
+        "range": 2,
+        "hit": 3
+      },
+      "winchester": "SALVO",
+      "salvos": 2,
+      "vpClass": "SHIP"
+    }
   ],
   "squadrons": [
-    { "id": "US-SQ-124ATKS", "side": "US", "nameJa": "第124攻撃飛行隊",        "tokenType": "MQ-9",   "count": 4, "generate": "ANY_BAND" },
-    { "id": "US-SQ-69BS",    "side": "US", "nameJa": "第69爆撃飛行隊",         "tokenType": "B-52H",  "count": 1, "generate": "BAND1_OR_STANDOFF" },
-    { "id": "US-SQ-23BS",    "side": "US", "nameJa": "第23爆撃飛行隊",         "tokenType": "B-52H",  "count": 1, "generate": "BAND1_OR_STANDOFF" },
-    { "id": "US-SQ-9ERS",    "side": "US", "nameJa": "第9遠征偵察飛行隊",      "tokenType": "RQ-4",   "count": 2, "generate": "ANY_BAND" },
-    { "id": "US-SQ-960AACS", "side": "US", "nameJa": "第960空中管制飛行隊",    "tokenType": "E-3",    "count": 1, "generate": "BAND1_OR_STANDOFF" },
-    { "id": "US-SQ-90FS",    "side": "US", "nameJa": "第90戦闘飛行隊",         "tokenType": "F-22",   "count": 4, "generate": "BAND1" },
-    { "id": "US-SQ-44FS",    "side": "US", "nameJa": "第44戦闘飛行隊",         "tokenType": "F-15C",  "count": 4, "generate": "BAND1" },
-    { "id": "US-SQ-34FS",    "side": "US", "nameJa": "第34戦闘飛行隊",         "tokenType": "F-35A",  "count": 4, "generate": "BAND1" },
-    { "id": "US-SQ-391FS",   "side": "US", "nameJa": "第391戦闘飛行隊",        "tokenType": "F-15E",  "count": 4, "generate": "BAND1" },
-    { "id": "US-SQ-480FS",   "side": "US", "nameJa": "第480戦闘飛行隊",        "tokenType": "F-16C",  "count": 4, "generate": "BAND1" },
-
-    { "id": "PRC-SQ-UAS",    "side": "PRC", "nameJa": "空軍無人機団",          "tokenType": "TB-001", "count": 4, "generate": "ANY_BAND" },
-    { "id": "PRC-SQ-HQ9",    "side": "PRC", "nameJa": "防空第3旅団",           "tokenType": "HQ-9",   "count": 1, "generate": "AIRBASE", "flying": false },
-    { "id": "PRC-SQ-RECON",  "side": "PRC", "nameJa": "空軍無人機旅団",        "tokenType": "WX-10",  "count": 2, "generate": "ANY_BAND" },
-    { "id": "PRC-SQ-AEW",    "side": "PRC", "nameJa": "早期警戒航空団",        "tokenType": "KJ-2000","count": 1, "generate": "BAND1_OR_STANDOFF" },
-    { "id": "PRC-SQ-SA21",   "side": "PRC", "nameJa": "防空第5団",             "tokenType": "SA-21",  "count": 1, "generate": "AIRBASE", "flying": false },
-    { "id": "PRC-SQ-J10",    "side": "PRC", "nameJa": "空軍第124旅団",         "tokenType": "J-10",   "count": 4, "generate": "BAND1" },
-    { "id": "PRC-SQ-H6K",    "side": "PRC", "nameJa": "第8爆撃師団",           "tokenType": "H-6K",   "count": 1, "generate": "BAND1_OR_STANDOFF" },
-    { "id": "PRC-SQ-J20",    "side": "PRC", "nameJa": "空軍第5旅団",           "tokenType": "J-20",   "count": 4, "generate": "BAND1" },
-    { "id": "PRC-SQ-J16",    "side": "PRC", "nameJa": "空軍第26旅団",          "tokenType": "J-16",   "count": 4, "generate": "BAND1" },
-    { "id": "PRC-SQ-JH7",    "side": "PRC", "nameJa": "空軍第126旅団",         "tokenType": "JH-7",   "count": 4, "generate": "BAND1" }
+    {
+      "id": "US-SQ-124ATKS",
+      "side": "US",
+      "nameJa": "第124攻撃飛行隊",
+      "tokenType": "MQ-9",
+      "count": 4,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "US-SQ-69BS",
+      "side": "US",
+      "nameJa": "第69爆撃飛行隊",
+      "tokenType": "B-52H",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-23BS",
+      "side": "US",
+      "nameJa": "第23爆撃飛行隊",
+      "tokenType": "B-52H",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-9ERS",
+      "side": "US",
+      "nameJa": "第9遠征偵察飛行隊",
+      "tokenType": "RQ-4",
+      "count": 2,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "US-SQ-960AACS",
+      "side": "US",
+      "nameJa": "第960空中管制飛行隊",
+      "tokenType": "E-3",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-90FS",
+      "side": "US",
+      "nameJa": "第90戦闘飛行隊",
+      "tokenType": "F-22",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-44FS",
+      "side": "US",
+      "nameJa": "第44戦闘飛行隊",
+      "tokenType": "F-15C",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-34FS",
+      "side": "US",
+      "nameJa": "第34戦闘飛行隊",
+      "tokenType": "F-35A",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-391FS",
+      "side": "US",
+      "nameJa": "第391戦闘飛行隊",
+      "tokenType": "F-15E",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-480FS",
+      "side": "US",
+      "nameJa": "第480戦闘飛行隊",
+      "tokenType": "F-16C",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-UAS",
+      "side": "PRC",
+      "nameJa": "空軍無人機団",
+      "tokenType": "TB-001",
+      "count": 4,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "PRC-SQ-HQ9",
+      "side": "PRC",
+      "nameJa": "防空第3旅団",
+      "tokenType": "HQ-9",
+      "count": 1,
+      "generate": "AIRBASE",
+      "flying": false
+    },
+    {
+      "id": "PRC-SQ-RECON",
+      "side": "PRC",
+      "nameJa": "空軍無人機旅団",
+      "tokenType": "WX-10",
+      "count": 2,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "PRC-SQ-AEW",
+      "side": "PRC",
+      "nameJa": "早期警戒航空団",
+      "tokenType": "KJ-2000",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "PRC-SQ-SA21",
+      "side": "PRC",
+      "nameJa": "防空第5団",
+      "tokenType": "SA-21",
+      "count": 1,
+      "generate": "AIRBASE",
+      "flying": false
+    },
+    {
+      "id": "PRC-SQ-J10",
+      "side": "PRC",
+      "nameJa": "空軍第124旅団",
+      "tokenType": "J-10",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-H6K",
+      "side": "PRC",
+      "nameJa": "第8爆撃師団",
+      "tokenType": "H-6K",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "PRC-SQ-J20",
+      "side": "PRC",
+      "nameJa": "空軍第5旅団",
+      "tokenType": "J-20",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-J16",
+      "side": "PRC",
+      "nameJa": "空軍第26旅団",
+      "tokenType": "J-16",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-JH7",
+      "side": "PRC",
+      "nameJa": "空軍第126旅団",
+      "tokenType": "JH-7",
+      "count": 4,
+      "generate": "BAND1"
+    }
   ],
   "campaigns": [
     {
@@ -59,7 +603,148 @@
       "descriptionJa": "1 ATO。任務は消耗(Attrition)、態勢は標準、支援カードなし。米はF-16C、中はJ-10の飛行隊を使う。",
       "atoCount": 1,
       "mission": "ATTRITION",
-      "fixedSquadrons": { "US": ["US-SQ-480FS"], "PRC": ["PRC-SQ-J10"] }
+      "fixedSquadrons": {
+        "US": [
+          "US-SQ-480FS"
+        ],
+        "PRC": [
+          "PRC-SQ-J10"
+        ]
+      },
+      "allowedPostures": [
+        "STANDARD"
+      ]
+    },
+    {
+      "id": "C2",
+      "nameJa": "大会",
+      "descriptionJa": "2 ATO。任務は消耗(Attrition)、態勢は標準、支援カードなし。全飛行隊から4個飛行隊を選ぶ。入札は第1 ATO だけで、第2 ATO は第1 ATO で主導権を取れなかった側が主導権を持つ。",
+      "atoCount": 2,
+      "mission": "ATTRITION",
+      "allowedPostures": [
+        "STANDARD"
+      ],
+      "bidRule": "FIRST_ATO_ONLY_ALTERNATE"
+    }
+  ],
+  "postures": [
+    {
+      "id": "US-STANDARD",
+      "side": "US",
+      "kind": "STANDARD",
+      "nameJa": "標準",
+      "descriptionJa": "いつでも選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6
+    },
+    {
+      "id": "US-ACE",
+      "side": "US",
+      "kind": "ACE",
+      "nameJa": "ACE(分散運用)",
+      "descriptionJa": "米の基地への攻撃はすべて不利になる。CL からは D4 を振らずに全機が発進する。",
+      "squadronLimit": 3,
+      "enablerLimit": 5,
+      "effects": [
+        "AIRBASE_STRIKES_DISADVANTAGE",
+        "CL_MAX_GENERATION"
+      ]
+    },
+    {
+      "id": "US-SURGE",
+      "side": "US",
+      "kind": "SURGE",
+      "nameJa": "サージ",
+      "descriptionJa": "多くの部隊を出せるが、CL を使えない。",
+      "squadronLimit": 6,
+      "enablerLimit": 7,
+      "effects": [
+        "NO_CL"
+      ]
+    },
+    {
+      "id": "US-HEDGEHOG",
+      "side": "US",
+      "kind": "HEDGEHOG",
+      "nameJa": "ヘッジホッグ",
+      "descriptionJa": "防空(ADA)の駒を1個、基地に発生させる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6,
+      "effects": [
+        "GENERATE_ADA"
+      ],
+      "adaTokenType": "US-ADA"
+    },
+    {
+      "id": "US-STANDOFF",
+      "side": "US",
+      "kind": "STANDOFF",
+      "nameJa": "スタンドオフ",
+      "descriptionJa": "B-52 の飛行隊2枚を上限に数えずに選べる。",
+      "squadronLimit": 3,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "US-SQ-69BS",
+        "US-SQ-23BS"
+      ]
+    },
+    {
+      "id": "PRC-STANDARD",
+      "side": "PRC",
+      "kind": "STANDARD",
+      "nameJa": "標準",
+      "descriptionJa": "いつでも選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6
+    },
+    {
+      "id": "PRC-PLAAF",
+      "side": "PRC",
+      "kind": "PLAAF",
+      "nameJa": "空軍(PLAAF)",
+      "descriptionJa": "支援カードは空軍のものだけを選べる。",
+      "squadronLimit": 6,
+      "enablerLimit": 5,
+      "effects": [
+        "PLAAF_ENABLERS_ONLY"
+      ]
+    },
+    {
+      "id": "PRC-JOINT",
+      "side": "PRC",
+      "kind": "JOINT_OPERATIONS",
+      "nameJa": "統合作戦",
+      "descriptionJa": "飛行隊は飛行部隊だけを選べる。支援カードを多く選べる。",
+      "squadronLimit": 3,
+      "enablerLimit": 9,
+      "effects": [
+        "FLYING_ONLY"
+      ]
+    },
+    {
+      "id": "PRC-ADA",
+      "side": "PRC",
+      "kind": "ADA",
+      "nameJa": "防空(ADA)",
+      "descriptionJa": "防空の飛行隊2枚(HQ-9、SA-21)を上限に数えずに選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "PRC-SQ-HQ9",
+        "PRC-SQ-SA21"
+      ]
+    },
+    {
+      "id": "PRC-STANDOFF",
+      "side": "PRC",
+      "kind": "STANDOFF",
+      "nameJa": "スタンドオフ",
+      "descriptionJa": "H-6K の飛行隊を上限に数えずに選べる(効果は未確認のため推定)。",
+      "squadronLimit": 3,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "PRC-SQ-H6K"
+      ]
     }
   ]
 }

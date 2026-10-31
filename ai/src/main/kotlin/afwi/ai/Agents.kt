@@ -6,6 +6,7 @@ import afwi.engine.CaptureKind
 import afwi.engine.CaptureRecord
 import afwi.engine.Engine
 import afwi.engine.Phase
+import afwi.engine.PostureKind
 import afwi.engine.PlayerView
 import afwi.engine.TokenClass
 import afwi.engine.TokenType
@@ -55,6 +56,8 @@ class HeuristicAgent(
         require(acts.isNotEmpty()) { "no legal action" }
         if (acts.size == 1) return acts.single()
         return when (view.phase) {
+            Phase.POSTURE -> choosePosture(acts)
+            Phase.DRAFT -> chooseDraft(view, acts)
             Phase.DEPLOY -> chooseDeploy(acts)
             Phase.BID -> acts.first()
             // 先攻を取って先に飛行隊を発進させる
@@ -62,6 +65,53 @@ class HeuristicAgent(
             Phase.TURNS -> chooseTurnAction(view, acts)
             Phase.GAME_OVER -> acts.first()
         }
+    }
+
+    private fun choosePosture(acts: List<Action>): Action {
+        val postures = acts.filterIsInstance<Action.ChoosePosture>()
+        if (difficulty == Difficulty.EASY) return postures.random(rnd)
+        // 支援カードが入るまでは、枚数の多い標準を基本にする
+        return postures.firstOrNull { engine.content.posture(it.postureId).kind == PostureKind.STANDARD } ?: postures.first()
+    }
+
+    /** 参加させる飛行隊の組み合わせを、機種の強さと組み合わせの相性で選ぶ。 */
+    private fun chooseDraft(view: PlayerView, acts: List<Action>): Action {
+        val drafts = acts.filterIsInstance<Action.Draft>()
+        if (difficulty == Difficulty.EASY) {
+            // 初級は、なるべく多くの飛行隊をでたらめに選ぶ
+            val maxSize = drafts.maxOf { it.squadronIds.size }
+            return drafts.filter { it.squadronIds.size == maxSize }.random(rnd)
+        }
+        val value = view.squadrons.filter { it.owner == view.viewer }.associate { sq ->
+            val def = sq.def
+            val live = view.tokens.count { it.squadronId == sq.id && it.zone != Zone.Destroyed }
+            val type = def?.let { engine.content.tokenType(it.tokenType) }
+            sq.id to Pair(type, if (def == null) 0.0 else squadronValue(type!!) * live / def.count)
+        }
+        return drafts.maxBy { d ->
+            val picked = d.squadronIds.mapNotNull { value[it] }
+            val classes = picked.mapNotNull { it.first?.cls }
+            var total = picked.sumOf { it.second }
+            // 早期警戒機は戦闘機と組んで初めて生きる
+            if (TokenClass.AEW in classes && classes.none { it == TokenClass.FIGHTER_GEN4 || it == TokenClass.FIGHTER_GEN5 }) total -= 2.0
+            total
+        }
+    }
+
+    private fun squadronValue(type: TokenType): Double = when (type.cls) {
+        TokenClass.FIGHTER_GEN5 -> 4.0
+        TokenClass.FIGHTER_GEN4 -> when {
+            type.air?.hit == 2 && type.surface != null -> 3.3
+            type.air?.hit == 2 -> 3.0
+            else -> 2.6
+        }
+        TokenClass.AEW -> 2.6
+        TokenClass.BOMBER -> 2.4
+        TokenClass.ADA -> 2.2
+        TokenClass.UAS_ATTACK -> 2.0
+        TokenClass.UAS_RECON -> 1.2
+        TokenClass.EW -> 1.5
+        TokenClass.SHIP -> 2.0
     }
 
     private fun chooseDeploy(acts: List<Action>): Action {
@@ -190,12 +240,18 @@ class HeuristicAgent(
 
     private fun scoreActivate(a: Action.Activate, ctx: Ctx): Double {
         val sq = ctx.view.squadrons.firstOrNull { it.id == a.squadronId } ?: return 0.0
-        val ready = ctx.view.tokens.count { it.squadronId == sq.id && it.zone == Zone.Grounded && !it.unavailable }
+        val readyTokens = ctx.view.tokens.filter { it.squadronId == sq.id && it.zone == Zone.Grounded && !it.unavailable }
         val airborne = ctx.mine.count { it.isAirborne() }
         val def = sq.def ?: return 0.0
+        val type = engine.content.tokenType(def.tokenType)
         // 地上にいる機体は基地攻撃で一緒に失われる危険がある。上空に出しておく価値がある
         val urgency = if (airborne == 0) 3.0 else 1.2
-        return urgency * ready / def.count.coerceAtLeast(1)
+        var v = urgency * readyTokens.size / def.count.coerceAtLeast(1)
+        // 防空は展開すると、敵の基地攻撃を不利にする
+        if (type.cls == TokenClass.ADA) v += 1.5
+        // 発進先（1帯かスタンドオフか、どの帯か）の良し悪しで同点を崩す
+        readyTokens.firstOrNull()?.let { v += 0.2 * positionValue(ctx, it, type, engine.coord(a.to, ctx.me)) }
+        return v
     }
 
     private fun scoreMove(a: Action.Move, ctx: Ctx): Double {

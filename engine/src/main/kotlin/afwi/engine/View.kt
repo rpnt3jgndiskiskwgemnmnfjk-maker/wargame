@@ -19,6 +19,8 @@ data class SquadronView(
     val id: String,
     val owner: Side,
     val base: BaseKind,
+    /** この ATO に参加している。相手の不参加の飛行隊は視点に含めない。 */
+    val drafted: Boolean,
     val faceUp: Boolean,
     /** 伏せた相手の飛行隊は null。 */
     val def: SquadronDef?,
@@ -30,6 +32,8 @@ data class OpponentView(
     val side: Side,
     val cyber: Int,
     val intel: IntelLevel,
+    /** 態勢は両者が選び終えた時点で公開される。 */
+    val posture: String?,
     val airbaseBlocksHit: Int,
     /** ゲーム終了までは null（ミッションが分かってしまうため）。 */
     val mission: MissionId?,
@@ -50,6 +54,8 @@ data class PlayerView(
     val opponent: OpponentView,
     val tokens: List<TokenView>,
     val squadrons: List<SquadronView>,
+    /** 陣営ごと・基地の種類ごとに、そこへの攻撃が不利になる理由（防空の存在や ACE 態勢は公開情報）。 */
+    val baseDefense: Map<Side, Map<BaseKind, List<String>>>,
     val log: List<String>,
     val winner: Side?,
     val gameOverReason: String?,
@@ -73,11 +79,11 @@ fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
             squadronId = t.squadronId,
         )
     }
-    val squadrons = s.squadrons.values.map { sq ->
+    val squadrons = s.squadrons.values.filter { it.owner == viewer || it.drafted || over }.map { sq ->
         val known = over || sq.owner == viewer || sq.faceUp
         SquadronView(
             id = sq.id,
-            owner = sq.owner, base = sq.base, faceUp = sq.faceUp,
+            owner = sq.owner, base = sq.base, drafted = sq.drafted, faceUp = sq.faceUp,
             def = if (known) content.squadron(sq.defId) else null,
             damage = sq.damage, destroyed = sq.isDestroyed,
         )
@@ -94,11 +100,18 @@ fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
         initiativeWinner = s.initiativeWinner,
         me = s.player(viewer),
         opponent = OpponentView(
-            side = enemy, cyber = op.cyber, intel = op.intel, airbaseBlocksHit = op.airbaseBlocksHit,
+            side = enemy, cyber = op.cyber, intel = op.intel,
+            posture = if (s.phase == Phase.POSTURE) null else op.posture,
+            airbaseBlocksHit = op.airbaseBlocksHit,
             mission = if (over) op.mission else null, vp = if (over) op.vp else null,
         ),
         tokens = tokens,
         squadrons = squadrons,
+        baseDefense = Side.entries.associateWith { side ->
+            BaseKind.entries.associateWith { base ->
+                baseDefenseReasons(side, base == BaseKind.AIRBASE, s.tokens.values, s.player(side).posture)
+            }
+        },
         log = s.log.mapNotNull { it.textFor(viewer) },
         winner = s.winner,
         gameOverReason = s.gameOverReason,

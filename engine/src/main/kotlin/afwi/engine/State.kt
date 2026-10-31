@@ -38,7 +38,7 @@ enum class BaseKind { AIRBASE, CL }
 enum class IntelLevel { NORMAL, ADVANTAGE }
 
 @Serializable
-enum class Phase { DEPLOY, BID, CHOOSE_ORDER, TURNS, GAME_OVER }
+enum class Phase { POSTURE, DRAFT, DEPLOY, BID, CHOOSE_ORDER, TURNS, GAME_OVER }
 
 @Serializable
 data class TokenState(
@@ -64,6 +64,8 @@ data class SquadronState(
     val defId: String,
     val owner: Side,
     val base: BaseKind = BaseKind.AIRBASE,
+    /** この ATO に参加している（ドラフトされ、盤上の基地か CL に置かれている）。 */
+    val drafted: Boolean = false,
     /** 起動済み（表向き）。 */
     val faceUp: Boolean = false,
     val damage: Int = 0,
@@ -93,6 +95,10 @@ data class CaptureRecord(
 data class PlayerState(
     val side: Side,
     val mission: MissionId,
+    /** この ATO の態勢（公開）。 */
+    val posture: String? = null,
+    val usedPostures: List<String> = emptyList(),
+    val drafted: Boolean = false,
     val deployed: Boolean = false,
     val bid: Int? = null,
     val cyber: Int = 1,
@@ -135,6 +141,8 @@ data class GameState(
     val squadrons: Map<String, SquadronState>,
     val turn: TurnState,
     val initiativeWinner: Side? = null,
+    /** ATO ごとの主導権を持った陣営（大会の交代ルールで使う）。 */
+    val initiativeHistory: List<Side> = emptyList(),
     /** GAME_OVER のときの勝者。null で GAME_OVER なら引き分け。 */
     val winner: Side? = null,
     val gameOverReason: String? = null,

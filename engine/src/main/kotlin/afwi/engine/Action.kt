@@ -8,6 +8,14 @@ import kotlinx.serialization.Serializable
 sealed interface Action {
     val side: Side
 
+    /** この ATO の態勢を選ぶ（両者が選んだら公開）。 */
+    @Serializable @SerialName("posture")
+    data class ChoosePosture(override val side: Side, val postureId: String) : Action
+
+    /** この ATO に参加させる飛行隊を選ぶ。 */
+    @Serializable @SerialName("draft")
+    data class Draft(override val side: Side, val squadronIds: Set<String>) : Action
+
     /** 飛行隊の配置（基地か CL）を確定する。CL は米のみ。 */
     @Serializable @SerialName("deploy")
     data class Deploy(override val side: Side, val placements: Map<String, BaseKind>) : Action

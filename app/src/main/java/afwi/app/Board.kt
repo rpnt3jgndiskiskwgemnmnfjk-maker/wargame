@@ -96,7 +96,7 @@ private fun BaseArea(view: PlayerView, side: Side, selectedTokenId: String?, onS
             "${Ja.side(side)}の基地・CL・スタンドオフ(基地施設の損害 $blocks/3)",
             fontWeight = FontWeight.Bold,
         )
-        for (sq in view.squadrons.filter { it.owner == side }) {
+        for (sq in view.squadrons.filter { it.owner == side && it.drafted }) {
             val grounded = view.tokens.count { it.squadronId == sq.id && it.zone == Zone.Grounded && !it.unavailable }
             val unavailable = view.tokens.count { it.squadronId == sq.id && it.unavailable }
             val state = when {
@@ -154,7 +154,7 @@ private fun tokenIdOf(a: Action): String? = when (a) {
 
 /** 手番中の操作。起動ボタン、選んだ駒の行動、手番の終了を並べる。 */
 @Composable
-fun ActionPanel(view: PlayerView, selectedTokenId: String?, onAct: (Action) -> Unit) {
+fun ActionPanel(view: PlayerView, engine: afwi.engine.Engine, selectedTokenId: String?, onAct: (Action) -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             val turn = view.turn
@@ -172,14 +172,14 @@ fun ActionPanel(view: PlayerView, selectedTokenId: String?, onAct: (Action) -> U
                 )
                 val acts = view.legalActions
                 for (a in acts.filterIsInstance<Action.Activate>()) {
-                    Button(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view)) }
+                    Button(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view, engine)) }
                 }
                 if (selectedTokenId != null) {
                     Text("選択中: ${tokenName(view, selectedTokenId)}", fontWeight = FontWeight.Bold)
                     val tokenActs = acts.filter { tokenIdOf(it) == selectedTokenId }
                     if (tokenActs.isEmpty()) Text("この駒がいまできる行動はありません")
                     for (a in tokenActs) {
-                        OutlinedButton(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view)) }
+                        OutlinedButton(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view, engine)) }
                     }
                 } else if (acts.any { tokenIdOf(it) != null }) {
                     Text("自分の駒をタップすると、その駒の行動を選べます")
@@ -190,7 +190,7 @@ fun ActionPanel(view: PlayerView, selectedTokenId: String?, onAct: (Action) -> U
                         onClick = { onAct(end) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                    ) { Text(describe(end, view)) }
+                    ) { Text(describe(end, view, engine)) }
                 }
             }
         }
