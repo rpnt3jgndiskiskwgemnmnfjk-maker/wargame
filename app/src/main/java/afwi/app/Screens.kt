@@ -1,5 +1,6 @@
 package afwi.app
 
+import afwi.ai.Difficulty
 import afwi.engine.Action
 import afwi.engine.Engine
 import afwi.engine.IntelLevel
@@ -12,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +34,9 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,13 +54,19 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
             Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 val game = ui.game
                 if (game == null || ui.screen == Screen.HOME) {
-                    HomeScreen(vm.engine) { vm.newHotseatGame("C1") }
+                    HomeScreen(
+                        engine = vm.engine,
+                        onHotseat = { vm.newHotseatGame("C1") },
+                        onCpu = { side, difficulty -> vm.newCpuGame("C1", side, difficulty) },
+                    )
                 } else {
                     when (ui.screen) {
                         Screen.HANDOFF -> HandoffScreen(ui.holder, vm::confirmHandoff)
                         Screen.RESULT -> ResultScreen(vm.engine.viewFor(game, ui.holder), vm::backToHome)
                         else -> PlayScreen(
                             view = vm.engine.viewFor(game, ui.holder),
+                            modeLabel = modeLabel(ui.mode),
+                            cpuThinking = ui.cpuThinking,
                             selectedTokenId = ui.selectedTokenId,
                             error = ui.error,
                             onSelect = vm::select,
@@ -68,9 +79,16 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
     }
 }
 
+private fun modeLabel(mode: Mode): String = when (mode) {
+    is Mode.Hotseat -> "ホットシート"
+    is Mode.VsCpu -> "対CPU(${mode.difficulty.labelJa})"
+}
+
 @Composable
-private fun HomeScreen(engine: Engine, onStart: () -> Unit) {
+private fun HomeScreen(engine: Engine, onHotseat: () -> Unit, onCpu: (Side, Difficulty) -> Unit) {
     val campaign = engine.content.campaign("C1")
+    var humanSide by remember { mutableStateOf(Side.US) }
+    var difficulty by remember { mutableStateOf(Difficulty.NORMAL) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -84,13 +102,42 @@ private fun HomeScreen(engine: Engine, onStart: () -> Unit) {
                 Text("ミッション: ${Ja.mission(campaign.mission)}")
             }
         }
-        Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("CPU と対戦", fontWeight = FontWeight.Bold)
+                Text("自分の陣営")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (side in Side.entries) {
+                        ToggleButton(selected = humanSide == side, label = "${Ja.side(side)}軍", onClick = { humanSide = side })
+                    }
+                }
+                Text("CPU の強さ")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (d in Difficulty.entries) {
+                        ToggleButton(selected = difficulty == d, label = d.labelJa, onClick = { difficulty = d })
+                    }
+                }
+                Button(onClick = { onCpu(humanSide, difficulty) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("CPU と対戦を始める")
+                }
+            }
+        }
+        OutlinedButton(onClick = onHotseat, modifier = Modifier.fillMaxWidth()) {
             Text("ホットシートで対局を始める(1台を交代で使う)")
         }
         Text(
-            "M1 版: 遭遇戦だけを遊べます。態勢・支援カード・AI 対戦は今後の版で追加します。",
+            "現在の版: 遭遇戦だけを遊べます。態勢・支援カードは今後の版で追加します。",
             style = MaterialTheme.typography.bodySmall,
         )
+    }
+}
+
+@Composable
+private fun ToggleButton(selected: Boolean, label: String, onClick: () -> Unit) {
+    if (selected) {
+        Button(onClick = onClick) { Text("✓ $label") }
+    } else {
+        OutlinedButton(onClick = onClick) { Text(label) }
     }
 }
 
@@ -118,6 +165,8 @@ private fun HandoffScreen(holder: Side, onConfirm: () -> Unit) {
 @Composable
 private fun PlayScreen(
     view: PlayerView,
+    modeLabel: String,
+    cpuThinking: Boolean,
     selectedTokenId: String?,
     error: String?,
     onSelect: (String?) -> Unit,
@@ -127,7 +176,10 @@ private fun PlayScreen(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        StatusHeader(view)
+        StatusHeader(view, modeLabel)
+        if (cpuThinking) {
+            Text("CPU が考えています…", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+        }
         if (error != null) Text("操作できません: $error", color = MaterialTheme.colorScheme.error)
         when (view.phase) {
             Phase.DEPLOY -> ChoiceSection(
@@ -155,13 +207,13 @@ private fun PlayScreen(
 }
 
 @Composable
-private fun StatusHeader(view: PlayerView) {
+private fun StatusHeader(view: PlayerView, modeLabel: String) {
     val me = view.me
     val op = view.opponent
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.background(sideColor(view.viewer).copy(alpha = 0.35f)).padding(12.dp)) {
             Text(
-                "${Ja.side(view.viewer)}側の画面 / ATO ${view.ato}/${view.atoCount} / ${phaseName(view)}",
+                "$modeLabel / ${Ja.side(view.viewer)}側の画面 / ATO ${view.ato}/${view.atoCount} / ${phaseName(view)}",
                 fontWeight = FontWeight.Bold,
             )
             Text("ミッション: ${Ja.mission(me.mission)}(相手には非公開)")
@@ -193,6 +245,7 @@ private fun ChoiceSection(title: String, note: String?, view: PlayerView, onAct:
             for (sq in view.squadrons.filter { it.owner == view.viewer }) {
                 Text("自分の飛行隊: ${squadronName(view, sq.id)}(${sq.def?.count ?: 0}機)")
             }
+            if (view.legalActions.isEmpty()) Text("相手の行動を待っています")
             for (a in view.legalActions) {
                 Button(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view)) }
             }

@@ -28,6 +28,7 @@ dependencyResolutionManagement {
 rootProject.name = "afwi"
 
 include(":engine")
+include(":ai")
 
 // Android SDK がない環境（ルールエンジンだけを開発・テストする環境）では :app を外す
 val androidSdkAvailable = System.getenv("ANDROID_HOME") != null ||

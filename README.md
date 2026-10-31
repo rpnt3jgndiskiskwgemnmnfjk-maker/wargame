@@ -14,9 +14,12 @@ AFWI（Air Force Wargame: Indo-Pacific）の調査資料と、そのルールで
 | モジュール | 内容 |
 |---|---|
 | `engine/` | ルールエンジン（純粋な Kotlin、Android に依存しない）。カード・機種データは `engine/src/main/resources/afwi/content.json` |
-| `app/` | Android アプリ（Jetpack Compose）。ホットシートで遊ぶ画面 |
+| `ai/` | CPU の対戦相手（純粋な Kotlin）。自分の視点だけを見て合法手から選ぶ。初級・中級の2段階 |
+| `app/` | Android アプリ（Jetpack Compose）。CPU 対戦とホットシート |
 
-現在は M1（遭遇戦だけを遊べる版）です。M1 で遊べる範囲は次のとおりです。
+現在は M1（遭遇戦だけを遊べる版）に CPU 対戦を加えた版です。遊べる範囲は次のとおりです。
+
+- CPU 対戦（米・中どちらでも、初級・中級）とホットシート
 
 - 配置（基地か CL）
 - 主導権の入札と先攻の決定
@@ -28,10 +31,10 @@ AFWI（Air Force Wargame: Indo-Pacific）の調査資料と、そのルールで
 
 ## ビルド
 
-ルールエンジンのテストは JDK 17 以上があれば実行できます（Android SDK は不要）。
+ルールエンジンと AI のテストは JDK 17 以上があれば実行できます（Android SDK は不要）。
 
 ```bash
-./gradlew :engine:test
+./gradlew :engine:test :ai:test
 ```
 
 APK のビルドには Android SDK が必要です。`ANDROID_HOME` を設定するか `local.properties` に `sdk.dir` を書くと、`:app` モジュールが有効になります。
