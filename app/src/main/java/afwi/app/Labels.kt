@@ -42,12 +42,33 @@ private fun defenseNote(v: PlayerView, base: afwi.engine.BaseKind): Pair<Boolean
 }
 
 fun describe(a: Action, v: PlayerView, engine: afwi.engine.Engine): String = when (a) {
+    is Action.ChooseMission -> "${Ja.mission(a.mission)}: ${Ja.missionRule(a.mission)}"
+    is Action.ChooseEnablers -> "支援カード: " + a.cardIds.joinToString("、") { engine.content.enabler(it).nameJa }.ifEmpty { "なし" }
+    is Action.PlayEnabler -> {
+        val c = engine.content.enabler(a.cardId)
+        val parts = mutableListOf("使う: ${c.nameJa}")
+        (c.action as? afwi.engine.Effect.Choice)?.let { parts += it.labelsJa[a.option] }
+        a.zone?.let { parts += "→ ${Ja.zone(it, v.viewer)}" }
+        a.target?.let { t ->
+            parts += when {
+                v.tokens.any { it.id == t } -> "目標: ${tokenName(v, t)}"
+                v.squadrons.any { it.id == t } -> "対象: ${squadronName(v, t)}"
+                else -> "対象: ${runCatching { engine.content.enabler(t).nameJa }.getOrDefault(t)}"
+            }
+        }
+        parts.joinToString(" ")
+    }
+    is Action.Respond -> when {
+        a.cardId != null -> "応答する: ${engine.content.enabler(a.cardId!!).nameJa}"
+        a.shipId != null -> "ミサイル防衛: ${tokenName(v, a.shipId!!)}"
+        else -> "見送る"
+    }
     is Action.ChoosePosture -> engine.content.posture(a.postureId).let {
         "${it.nameJa}(飛行隊${it.squadronLimit}・支援カード${it.enablerLimit}): ${it.descriptionJa}"
     }
     is Action.Draft -> "参加: " + a.squadronIds.joinToString("、") { squadronName(v, it) }
     is Action.Deploy -> a.placements.entries.joinToString("、") { (id, base) -> "${squadronName(v, id)} → ${Ja.base(base)}" }
-    is Action.SubmitBid -> "入札する(差し出す支援カード ${a.sacrifice}枚)"
+    is Action.SubmitBid -> "入札する(差し出す支援カード ${a.sacrifice.size}枚)"
     is Action.ChooseFirst -> "${Ja.side(a.first)}を先攻にする"
     is Action.Activate -> "起動: ${squadronName(v, a.squadronId)} → ${Ja.zone(a.to, v.viewer)}"
     is Action.Move -> "移動 → ${Ja.zone(a.to, v.viewer)}"

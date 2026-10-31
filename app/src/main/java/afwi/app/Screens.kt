@@ -115,7 +115,8 @@ private fun HomeScreen(
                 }
                 Text("${campaign.nameJa}(ATO ${campaign.atoCount}回)", fontWeight = FontWeight.Bold)
                 Text(campaign.descriptionJa)
-                Text("ミッション: ${Ja.mission(campaign.mission)}")
+                Text("ミッション: ${campaign.mission?.let { Ja.mission(it) } ?: "各自が秘密裏に選ぶ"}")
+                Text("支援カード: ${if (campaign.enablers) "使う" else "使わない"}")
             }
         }
         Card(Modifier.fillMaxWidth()) {
@@ -142,7 +143,7 @@ private fun HomeScreen(
             Text("ホットシートで対局を始める(1台を交代で使う)")
         }
         Text(
-            "現在の版: 遭遇戦と大会を遊べます。支援カードと残りのキャンペーンは今後の版で追加します。",
+            "現在の版: 遭遇戦・大会・長期戦を遊べます。キャンペーン4・5は今後の版で追加します。",
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -198,7 +199,14 @@ private fun PlayScreen(
             Text("CPU が考えています…", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
         }
         if (error != null) Text("操作できません: $error", color = MaterialTheme.colorScheme.error)
-        when (view.phase) {
+        view.pending?.let { PendingSection(view, engine, it, onAct) }
+        if (view.pending == null) when (view.phase) {
+            Phase.MISSION -> ChoiceSection(
+                title = "秘密のミッションを選ぶ",
+                note = "ミッションで勝利点(VP)の得方が決まります。相手にはゲーム終了まで見えません。",
+                view = view, engine = engine, onAct = onAct,
+            )
+            Phase.ENABLERS -> EnablerSection(view, engine, onAct)
             Phase.POSTURE -> ChoiceSection(
                 title = "この ATO の態勢を選ぶ",
                 note = "態勢で、参加させられる飛行隊と支援カードの枚数が決まります。標準以外は一度使うと選べません。",
@@ -206,11 +214,7 @@ private fun PlayScreen(
             )
             Phase.DRAFT -> DraftSection(view, engine, onAct)
             Phase.DEPLOY -> DeploySection(view, onAct)
-            Phase.BID -> ChoiceSection(
-                title = "主導権の入札",
-                note = "D4 を振り、差し出した支援カードの枚数を足して大きい方が主導権を得ます(支援カードは今後の版で追加)。",
-                view = view, engine = engine, onAct = onAct,
-            )
+            Phase.BID -> BidSection(view, engine, onAct)
             Phase.CHOOSE_ORDER -> ChoiceSection(
                 title = "主導権を得ました。先攻を決めてください",
                 note = null, view = view, engine = engine, onAct = onAct,
@@ -218,6 +222,7 @@ private fun PlayScreen(
             Phase.TURNS -> {
                 Board(view, selectedTokenId, onSelect)
                 ActionPanel(view, engine, selectedTokenId, onAct)
+                HandPanel(view, engine, onAct)
             }
             Phase.GAME_OVER -> Unit
         }
@@ -242,6 +247,7 @@ private fun StatusHeader(view: PlayerView, engine: Engine, modeLabel: String) {
                     "  情報: ${intelName(me.intel)}",
             )
             Text("獲得VP(自分): ${me.vp}  基地施設の損害: 自 ${me.airbaseBlocksHit} / 敵 ${op.airbaseBlocksHit}")
+            Text("支援カードの手札: 自 ${me.hand.size}枚 / 敵 ${op.handSize}枚")
         }
     }
 }
@@ -249,6 +255,8 @@ private fun StatusHeader(view: PlayerView, engine: Engine, modeLabel: String) {
 private fun intelName(level: IntelLevel) = if (level == IntelLevel.ADVANTAGE) "優位" else "通常"
 
 private fun phaseName(view: PlayerView): String = when (view.phase) {
+    Phase.MISSION -> "ミッションの選択"
+    Phase.ENABLERS -> "支援カードの選択"
     Phase.POSTURE -> "態勢の選択"
     Phase.DRAFT -> "飛行隊の選択"
     Phase.DEPLOY -> "配置"
@@ -360,6 +368,133 @@ private fun DeploySection(view: PlayerView, onAct: (Action) -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun PendingSection(view: PlayerView, engine: Engine, pending: afwi.engine.Pending, onAct: (Action) -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text("割り込み: ${pending.promptJa}", fontWeight = FontWeight.Bold)
+            for (a in view.legalActions) {
+                val r = a as? Action.Respond ?: continue
+                r.cardId?.let { Text(engine.content.enabler(it).descriptionJa, style = MaterialTheme.typography.bodySmall) }
+                if (r.cardId == null && r.shipId == null) {
+                    OutlinedButton(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view, engine)) }
+                } else {
+                    Button(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view, engine)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnablerSection(view: PlayerView, engine: Engine, onAct: (Action) -> Unit) {
+    var selected by remember(view.ato) { mutableStateOf(setOf<String>()) }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("この ATO の支援カードを選ぶ(上限${view.enablerLimit}枚)", fontWeight = FontWeight.Bold)
+            if (view.legalActions.isEmpty()) {
+                Text("相手の選択を待っています")
+            } else {
+                Text("単発カードは一度使うとキャンペーン中は選べません。何度でも使えるカードは ATO ごとに1回使えます。", style = MaterialTheme.typography.bodySmall)
+                for (c in view.enablerPool) {
+                    val on = c.id in selected
+                    Row(
+                        Modifier.fillMaxWidth().clickable { selected = if (on) selected - c.id else selected + c.id },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = on, onCheckedChange = { selected = if (on) selected - c.id else selected + c.id })
+                        Column {
+                            Text(
+                                "${c.nameJa}(${if (c.use == afwi.engine.UseType.SINGLE) "単発" else "毎ATO"}${if (c.action == null) "・応答" else ""})",
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(c.descriptionJa, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                val legal = selected.size <= view.enablerLimit
+                Button(
+                    onClick = { onAct(Action.ChooseEnablers(view.viewer, selected)) },
+                    enabled = legal, modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (legal) "この${selected.size}枚で決定" else "上限を超えています") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BidSection(view: PlayerView, engine: Engine, onAct: (Action) -> Unit) {
+    var selected by remember(view.ato) { mutableStateOf(setOf<String>()) }
+    val bids = view.legalActions.filterIsInstance<Action.SubmitBid>()
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("主導権の入札", fontWeight = FontWeight.Bold)
+            Text(
+                "D4 を振り、差し出した支援カードの枚数を足して大きい方が主導権を得ます。差し出したカードはこの ATO では使えません(使用済みにはなりません)。",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (bids.isEmpty()) {
+                Text("相手の入札を待っています")
+            } else {
+                for (id in view.me.hand) {
+                    val on = id in selected
+                    Row(
+                        Modifier.fillMaxWidth().clickable { selected = if (on) selected - id else selected + id },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = on, onCheckedChange = { selected = if (on) selected - id else selected + id })
+                        Text(engine.content.enabler(id).nameJa)
+                    }
+                }
+                val action = Action.SubmitBid(view.viewer, selected)
+                Button(onClick = { onAct(action) }, enabled = action in bids, modifier = Modifier.fillMaxWidth()) {
+                    Text("${selected.size}枚を差し出して入札する")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandPanel(view: PlayerView, engine: Engine, onAct: (Action) -> Unit) {
+    val me = view.me
+    if (me.hand.isEmpty() && me.knownEnemyCards.isEmpty() && me.modifiers.isEmpty() && view.opponent.modifiers.isEmpty()) return
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("支援カード(手番中に1枚使える。応答カードは相手の行動の直後に問い合わせが出る)", fontWeight = FontWeight.Bold)
+            val plays = view.legalActions.filterIsInstance<Action.PlayEnabler>()
+            for (id in me.hand) {
+                val c = engine.content.enabler(id)
+                Text("${c.nameJa}${if (c.action == null) "(応答)" else ""}", fontWeight = FontWeight.Bold)
+                Text(c.descriptionJa, style = MaterialTheme.typography.bodySmall)
+                for (a in plays.filter { it.cardId == id }) {
+                    OutlinedButton(onClick = { onAct(a) }, modifier = Modifier.fillMaxWidth()) { Text(describe(a, view, engine)) }
+                }
+            }
+            if (me.modifiers.isNotEmpty()) Text("自分の効果: ${me.modifiers.joinToString("、") { modName(it) }}", style = MaterialTheme.typography.bodySmall)
+            if (view.opponent.modifiers.isNotEmpty()) Text("相手の効果: ${view.opponent.modifiers.joinToString("、") { modName(it) }}", style = MaterialTheme.typography.bodySmall)
+            if (me.knownEnemyCards.isNotEmpty()) {
+                Text("情報判定で見た相手の手札: ${me.knownEnemyCards.joinToString("、") { engine.content.enabler(it).nameJa }}", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+private fun modName(m: afwi.engine.ModKind): String = when (m) {
+    afwi.engine.ModKind.OWN_AIR_TO_AIR_ADV -> "空対空が有利"
+    afwi.engine.ModKind.ENEMY_ACQUIRE_DIS -> "相手の捕捉が不利"
+    afwi.engine.ModKind.ENEMY_ATTACK_DIS -> "相手の攻撃が不利"
+    afwi.engine.ModKind.OWN_ATTACK_ADV -> "攻撃が有利"
+    afwi.engine.ModKind.ENEMY_BASE_ATTACK_DIS -> "相手の基地攻撃が不利"
+    afwi.engine.ModKind.H6K_ADV -> "H-6Kが有利"
+    afwi.engine.ModKind.NEXT_AIR_TO_AIR_ADV -> "次の空対空が有利"
+    afwi.engine.ModKind.CL_MAX_GENERATION -> "CLから全機発進"
+    afwi.engine.ModKind.SOF_IMMUNE -> "特殊作戦を受けない"
 }
 
 @Composable

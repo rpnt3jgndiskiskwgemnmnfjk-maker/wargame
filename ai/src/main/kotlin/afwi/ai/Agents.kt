@@ -5,6 +5,13 @@ import afwi.engine.BaseKind
 import afwi.engine.CaptureKind
 import afwi.engine.CaptureRecord
 import afwi.engine.Engine
+import afwi.engine.Effect
+import afwi.engine.EnablerDef
+import afwi.engine.MissionId
+import afwi.engine.ModKind
+import afwi.engine.Pending
+import afwi.engine.ResponseEffect
+import afwi.engine.UseType
 import afwi.engine.Phase
 import afwi.engine.PostureKind
 import afwi.engine.PlayerView
@@ -55,16 +62,120 @@ class HeuristicAgent(
         val acts = view.legalActions
         require(acts.isNotEmpty()) { "no legal action" }
         if (acts.size == 1) return acts.single()
+        view.pending?.let { return chooseResponse(it, acts) }
         return when (view.phase) {
+            Phase.MISSION -> chooseMission(acts)
             Phase.POSTURE -> choosePosture(acts)
             Phase.DRAFT -> chooseDraft(view, acts)
+            Phase.ENABLERS -> chooseEnablers(view)
             Phase.DEPLOY -> chooseDeploy(acts)
-            Phase.BID -> acts.first()
+            Phase.BID -> chooseBid(view, acts)
             // 先攻を取って先に飛行隊を発進させる
             Phase.CHOOSE_ORDER -> acts.filterIsInstance<Action.ChooseFirst>().first { it.first == view.viewer }
             Phase.TURNS -> chooseTurnAction(view, acts)
             Phase.GAME_OVER -> acts.first()
         }
+    }
+
+    private fun chooseMission(acts: List<Action>): Action {
+        val missions = acts.filterIsInstance<Action.ChooseMission>()
+        if (difficulty == Difficulty.EASY) return missions.random(rnd)
+        // 阻止(Interdiction)は、どの撃破でも消耗(Attrition)以上の点になる
+        return missions.firstOrNull { it.mission == MissionId.INTERDICTION } ?: missions.first()
+    }
+
+    /** 割り込みには、使える応答があれば使う（初級は半々）。 */
+    private fun chooseResponse(p: Pending, acts: List<Action>): Action {
+        val decline = acts.first { it is Action.Respond && it.cardId == null && it.shipId == null }
+        val uses = acts.filter { it !== decline }
+        if (uses.isEmpty()) return decline
+        if (difficulty == Difficulty.EASY && rnd.nextBoolean()) return decline
+        // 艦艇のミサイル防衛は、斉射ブロックの残りが多い艦から使う
+        return uses.first()
+    }
+
+    /** 支援カードを、効果の強さとミッションとの相性で上限まで選ぶ。 */
+    private fun chooseEnablers(view: PlayerView): Action {
+        val pool = view.enablerPool
+        val k = view.enablerLimit
+        val picked = if (difficulty == Difficulty.EASY) {
+            pool.shuffled(rnd).take(k)
+        } else {
+            // 手番に使うカードを中心に、守りの応答カードを1枚混ぜる
+            val ranked = pool.sortedByDescending { cardValue(it, view) }
+            val reaction = pool.filter { it.action == null && it.response != null }.maxByOrNull { cardValue(it, view) }
+            val main = ranked.filter { it != reaction }.take(if (reaction != null && k >= 4) k - 1 else k)
+            if (reaction != null && k >= 4) main + reaction else main
+        }
+        return Action.ChooseEnablers(view.viewer, picked.map { it.id }.toSet())
+    }
+
+    private fun chooseBid(view: PlayerView, acts: List<Action>): Action {
+        val bids = acts.filterIsInstance<Action.SubmitBid>()
+        val none = bids.first { it.sacrifice.isEmpty() }
+        if (difficulty == Difficulty.EASY || view.me.hand.size < 5) return none
+        // 手札が多ければ、一番弱いカードを1枚差し出して主導権を狙う
+        val weakest = view.me.hand.minBy { cardValue(engine.content.enabler(it), view) }
+        return bids.firstOrNull { it.sacrifice == setOf(weakest) } ?: none
+    }
+
+    /** 支援カードの価値の目安（選択と入札で使う）。 */
+    private fun cardValue(c: EnablerDef, view: PlayerView): Double {
+        var v = c.action?.let { effectValue(it) } ?: 0.0
+        c.response?.let {
+            v = maxOf(v, when (it.effect) {
+                ResponseEffect.CANCEL_CARD -> 1.0
+                ResponseEffect.RECOVER_AIRCRAFT -> 1.3
+                ResponseEffect.AUTO_HIT -> 1.4
+                ResponseEffect.CANCEL_HIT_OR_MD -> 1.5
+                ResponseEffect.CANCEL_MD -> 0.8
+                ResponseEffect.CANCEL_DAMAGE -> 1.6
+                ResponseEffect.REGENERATE_SQUADRON -> 1.5
+                ResponseEffect.REROLL_ACQUIRE -> 0.5
+            })
+        }
+        val mission = view.me.mission
+        val tags = c.tags
+        if (mission == MissionId.NON_KINETIC_DOMINANCE && tags.any { it in setOf("EW", "CYBER", "SPACE", "SOF") }) v += 1.0
+        if (mission == MissionId.THREE_DOMINANCES && "NAVAL" in tags) v += 1.0
+        if (mission == MissionId.COUNTER_INTERVENTION && "PLARF" in tags) v += 1.0
+        if (mission == MissionId.ENFORCE_RULE_OF_LAW && c.action is Effect.Generate) v += 0.5
+        // 何度でも使えるカードは、単発カードより気軽に選べる
+        if (c.use == UseType.MULTIPLE) v += 0.2
+        return v
+    }
+
+    private fun effectValue(e: Effect): Double = when (e) {
+        is Effect.AcquireDice -> 1.6
+        is Effect.AcquireCyber -> 1.4
+        Effect.CyberAttempt -> 1.8
+        // サイバー値4は即勝利なので、相手のサイバー値を下げるカードは守りの要
+        is Effect.CyberDegrade -> 1.8 * e.amount
+        is Effect.RemoveTokens -> 1.2 * e.multiplier
+        Effect.ForceDiscard -> 1.2
+        Effect.DestroyUas -> 1.0
+        is Effect.Modifier -> when (e.mod) {
+            ModKind.OWN_ATTACK_ADV, ModKind.ENEMY_ATTACK_DIS -> 2.4
+            ModKind.OWN_AIR_TO_AIR_ADV -> 2.0
+            ModKind.ENEMY_ACQUIRE_DIS -> 1.6
+            ModKind.ENEMY_BASE_ATTACK_DIS -> 1.2
+            ModKind.H6K_ADV, ModKind.NEXT_AIR_TO_AIR_ADV -> 0.8
+            ModKind.SOF_IMMUNE -> 0.6
+            ModKind.CL_MAX_GENERATION -> 0.4
+        }
+        is Effect.Generate -> when {
+            e.count > 1 -> 3.0
+            engine.content.tokenType(e.tokenType).cls == TokenClass.SHIP -> 2.4
+            engine.content.tokenType(e.tokenType).cls == TokenClass.ADA -> 1.8
+            else -> 1.4
+        }
+        is Effect.BaseStrike -> if (e.hit == null) 2.8 else 2.6
+        Effect.DestroyShip -> 1.2
+        Effect.ExtraSquadron -> 2.0
+        is Effect.ReturnSpent -> 0.8
+        is Effect.AirRangeUpgrade -> 1.5
+        is Effect.Choice -> e.options.maxOf { effectValue(it) } + 0.2
+        is Effect.Sequence -> e.steps.sumOf { effectValue(it) } * 0.7
     }
 
     private fun choosePosture(acts: List<Action>): Action {
@@ -178,7 +289,75 @@ class HeuristicAgent(
         is Action.Acquire -> scoreAcquire(a, ctx)
         is Action.Activate -> scoreActivate(a, ctx)
         is Action.Move -> scoreMove(a, ctx)
+        is Action.PlayEnabler -> scoreEnabler(a, ctx)
         else -> 0.0
+    }
+
+    /** 手番中の支援カードの価値を、いまの盤面に合わせて見積もる。 */
+    private fun scoreEnabler(a: Action.PlayEnabler, ctx: Ctx): Double {
+        val c = engine.content.enabler(a.cardId)
+        val effect = c.action ?: return 0.0
+        val chosen = if (effect is Effect.Choice) effect.options[a.option] else effect
+        return effectNow(chosen, a, ctx)
+    }
+
+    private fun effectNow(e: Effect, a: Action.PlayEnabler, ctx: Ctx): Double {
+        val view = ctx.view
+        val cyber = view.me.cyber
+        val unseen = ctx.enemyAirborne.count { !it.acquired }
+        val mine = view.me.modifiers
+        return when (e) {
+            is Effect.AcquireDice -> if (unseen == 0) -1.0 else 0.6 * minOf(2.5, unseen.toDouble())
+            is Effect.AcquireCyber -> if (unseen == 0) -1.0 else 0.6 * minOf(cyber * e.multiplier, unseen)
+            Effect.CyberAttempt -> p(cyber + 1) * if (cyber >= 3) 20.0 else 1.6
+            is Effect.CyberDegrade -> {
+                val enemyCyber = view.opponent.cyber
+                if (enemyCyber == 0) -1.0 else minOf(e.amount, enemyCyber) * if (enemyCyber >= 3) 3.0 else 1.3
+            }
+            is Effect.RemoveTokens -> 0.7 * minOf(cyber * e.multiplier, ctx.enemyAirborne.size) - 0.1
+            Effect.ForceDiscard -> 0.6 * minOf(cyber, view.opponent.handSize) - 0.1
+            Effect.DestroyUas -> {
+                val uas = ctx.enemyAirborne.count { it.type?.cls == TokenClass.UAS_ATTACK || it.type?.cls == TokenClass.UAS_RECON || it.masked }
+                if (uas == 0) -1.0 else 1.2 * minOf(cyber, uas)
+            }
+            is Effect.Modifier -> if (e.mod in mine && e.mod != ModKind.CL_MAX_GENERATION) -1.0 else when (e.mod) {
+                ModKind.OWN_ATTACK_ADV, ModKind.ENEMY_ATTACK_DIS ->
+                    if (ctx.mine.any { it.isAirborne() } || ctx.enemyAirborne.isNotEmpty()) 2.0 else 0.3
+                ModKind.OWN_AIR_TO_AIR_ADV -> if (ctx.mine.any { it.isAirborne() && it.type?.air != null }) 1.5 else 0.2
+                ModKind.ENEMY_ACQUIRE_DIS -> if (ctx.enemyAirborne.isNotEmpty()) 1.2 else 0.2
+                ModKind.ENEMY_BASE_ATTACK_DIS -> if (ctx.enemyAirborne.isNotEmpty()) 0.9 else 0.2
+                ModKind.H6K_ADV -> if (ctx.mine.any { it.isAirborne() && it.type?.id == "H-6K" }) 1.2 else -1.0
+                ModKind.NEXT_AIR_TO_AIR_ADV -> if (!ctx.turn.shot) 0.8 else 0.2
+                ModKind.CL_MAX_GENERATION -> if (view.squadrons.any { it.owner == ctx.me && it.drafted && !it.faceUp && it.base == BaseKind.CL }) 1.0 else -1.0
+                ModKind.SOF_IMMUNE -> 0.4
+            }
+            is Effect.Generate -> {
+                val type = engine.content.tokenType(e.tokenType)
+                val base = when {
+                    e.count > 1 -> 3.0
+                    type.cls == TokenClass.SHIP -> 2.4
+                    type.cls == TokenClass.ADA -> 1.8
+                    else -> 1.4
+                }
+                val zoneBonus = a.zone?.let { z ->
+                    val dummy = TokenView(a.cardId, ctx.me, z, false, type, type.acqValue, false, false, false, null)
+                    0.3 * positionValue(ctx, dummy, type, engine.coord(z, ctx.me))
+                } ?: 0.0
+                base + zoneBonus
+            }
+            is Effect.BaseStrike -> {
+                val dis = view.baseDefense[ctx.enemy]?.get(BaseKind.AIRBASE).orEmpty().isNotEmpty() && !e.unblockable && !e.sof
+                val hit = e.hit?.let { val q = p(it); if (dis) q * q else q } ?: 1.0
+                val targets = view.squadrons.count { it.owner == ctx.enemy && it.drafted && !it.destroyed && it.base == BaseKind.AIRBASE }
+                hit * 2.5 * (if (targets > 0) 1.0 else 0.4)
+            }
+            Effect.DestroyShip -> a.target?.let { id -> ctx.byId[id]?.let { killValue(ctx, it) + 0.5 } } ?: -1.0
+            Effect.ExtraSquadron -> 1.5
+            is Effect.ReturnSpent -> a.target?.let { 0.6 * cardValue(engine.content.enabler(it), view) } ?: -1.0
+            is Effect.AirRangeUpgrade -> if (ctx.mine.any { it.isAirborne() && it.squadronId == a.target }) 1.5 else 0.6
+            is Effect.Choice -> effectNow(e.options[a.option], a, ctx)
+            is Effect.Sequence -> e.steps.sumOf { effectNow(it, a, ctx) } * 0.8
+        }
     }
 
     private fun scoreShoot(a: Action.ShootToken, ctx: Ctx): Double {

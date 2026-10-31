@@ -8,6 +8,28 @@ import kotlinx.serialization.Serializable
 sealed interface Action {
     val side: Side
 
+    /** キャンペーンの最初に秘密のミッションを選ぶ。 */
+    @Serializable @SerialName("mission")
+    data class ChooseMission(override val side: Side, val mission: MissionId) : Action
+
+    /** この ATO の支援カードを選ぶ（態勢の上限まで、非公開）。 */
+    @Serializable @SerialName("enablers")
+    data class ChooseEnablers(override val side: Side, val cardIds: Set<String>) : Action
+
+    /** 手番中に支援カードを使う。option は選択式の効果の番号、target・zone は対象。 */
+    @Serializable @SerialName("playEnabler")
+    data class PlayEnabler(
+        override val side: Side,
+        val cardId: String,
+        val option: Int = 0,
+        val target: String? = null,
+        val zone: Zone? = null,
+    ) : Action
+
+    /** 割り込みへの返答。カードか艦艇を選ぶ。どちらも null なら見送る。 */
+    @Serializable @SerialName("respond")
+    data class Respond(override val side: Side, val cardId: String? = null, val shipId: String? = null) : Action
+
     /** この ATO の態勢を選ぶ（両者が選んだら公開）。 */
     @Serializable @SerialName("posture")
     data class ChoosePosture(override val side: Side, val postureId: String) : Action
@@ -20,9 +42,9 @@ sealed interface Action {
     @Serializable @SerialName("deploy")
     data class Deploy(override val side: Side, val placements: Map<String, BaseKind>) : Action
 
-    /** 主導権の入札。sacrifice は差し出す支援カードの枚数。 */
+    /** 主導権の入札。sacrifice は差し出す支援カード（1枚につき出目+1。山札に戻る）。 */
     @Serializable @SerialName("bid")
-    data class SubmitBid(override val side: Side, val sacrifice: Int = 0) : Action
+    data class SubmitBid(override val side: Side, val sacrifice: Set<String> = emptySet()) : Action
 
     /** 入札の勝者が先攻を決める。 */
     @Serializable @SerialName("chooseFirst")

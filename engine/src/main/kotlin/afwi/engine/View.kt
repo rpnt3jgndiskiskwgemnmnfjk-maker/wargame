@@ -34,6 +34,10 @@ data class OpponentView(
     val intel: IntelLevel,
     /** 態勢は両者が選び終えた時点で公開される。 */
     val posture: String?,
+    /** 相手の支援カードの手札の枚数（中身は情報判定で見たものだけ me.knownEnemyCards にある）。 */
+    val handSize: Int,
+    /** 相手がこの ATO に使っている効果（使ったカードは公開されるため）。 */
+    val modifiers: List<ModKind>,
     val airbaseBlocksHit: Int,
     /** ゲーム終了までは null（ミッションが分かってしまうため）。 */
     val mission: MissionId?,
@@ -56,6 +60,11 @@ data class PlayerView(
     val squadrons: List<SquadronView>,
     /** 陣営ごと・基地の種類ごとに、そこへの攻撃が不利になる理由（防空の存在や ACE 態勢は公開情報）。 */
     val baseDefense: Map<Side, Map<BaseKind, List<String>>>,
+    /** 自分が判断を求められている割り込み。相手の割り込み中は null。 */
+    val pending: Pending?,
+    /** 支援カードの選択で選べるカードと上限（ENABLERS のときだけ）。 */
+    val enablerPool: List<EnablerDef>,
+    val enablerLimit: Int,
     val log: List<String>,
     val winner: Side?,
     val gameOverReason: String?,
@@ -102,6 +111,8 @@ fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
         opponent = OpponentView(
             side = enemy, cyber = op.cyber, intel = op.intel,
             posture = if (s.phase == Phase.POSTURE) null else op.posture,
+            handSize = op.hand.size,
+            modifiers = op.modifiers,
             airbaseBlocksHit = op.airbaseBlocksHit,
             mission = if (over) op.mission else null, vp = if (over) op.vp else null,
         ),
@@ -112,6 +123,9 @@ fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
                 baseDefenseReasons(side, base == BaseKind.AIRBASE, s.tokens.values, s.player(side).posture)
             }
         },
+        pending = s.pending?.takeIf { it.decider == viewer },
+        enablerPool = if (s.phase == Phase.ENABLERS) enablerPool(s, viewer) else emptyList(),
+        enablerLimit = enablerLimit(s, viewer),
         log = s.log.mapNotNull { it.textFor(viewer) },
         winner = s.winner,
         gameOverReason = s.gameOverReason,

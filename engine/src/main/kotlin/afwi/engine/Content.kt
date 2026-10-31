@@ -133,7 +133,10 @@ data class CampaignDef(
     val nameJa: String,
     val descriptionJa: String,
     val atoCount: Int,
-    val mission: MissionId,
+    /** null なら各陣営が秘密裏にミッションを選ぶ。 */
+    val mission: MissionId? = null,
+    /** 支援カードを使うか。 */
+    val enablers: Boolean = false,
     /** 空でなければ、ドラフトせずにこの飛行隊で戦う（遭遇戦）。 */
     val fixedSquadrons: Map<Side, List<String>> = emptyMap(),
     /** 選べる態勢の種類。null ならすべて。 */
@@ -148,16 +151,31 @@ data class Content(
     val squadrons: List<SquadronDef>,
     val campaigns: List<CampaignDef>,
     val postures: List<PostureDef> = emptyList(),
+    val enablers: List<EnablerDef> = emptyList(),
 ) {
     private val tokenTypeById by lazy { tokenTypes.associateBy { it.id } }
     private val squadronById by lazy { squadrons.associateBy { it.id } }
     private val campaignById by lazy { campaigns.associateBy { it.id } }
     private val postureById by lazy { postures.associateBy { it.id } }
+    private val enablerById by lazy { enablers.associateBy { it.id } }
 
     fun tokenType(id: String): TokenType = tokenTypeById[id] ?: error("unknown token type: $id")
     fun squadron(id: String): SquadronDef = squadronById[id] ?: error("unknown squadron: $id")
     fun campaign(id: String): CampaignDef = campaignById[id] ?: error("unknown campaign: $id")
     fun posture(id: String): PostureDef = postureById[id] ?: error("unknown posture: $id")
+    fun enabler(id: String): EnablerDef = enablerById[id] ?: error("unknown enabler: $id")
+
+    /** 陣営ごとに選べるミッション（仕様書 §9）。 */
+    fun missionsFor(side: Side): List<MissionId> = when (side) {
+        Side.US -> listOf(
+            MissionId.ATTRITION, MissionId.INTERDICTION, MissionId.ECONOMY_OF_FORCE,
+            MissionId.ENFORCE_RULE_OF_LAW, MissionId.NON_KINETIC_DOMINANCE,
+        )
+        Side.PRC -> listOf(
+            MissionId.ATTRITION, MissionId.INTERDICTION, MissionId.ECONOMY_OF_FORCE,
+            MissionId.COUNTER_INTERVENTION, MissionId.THREE_DOMINANCES,
+        )
+    }
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true }

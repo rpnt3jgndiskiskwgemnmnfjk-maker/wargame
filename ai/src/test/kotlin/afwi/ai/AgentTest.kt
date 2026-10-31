@@ -11,7 +11,7 @@ class AgentTest {
     private fun winRate(make: (Long) -> Map<Side, Agent>, side: Side, games: Int = 200, campaign: String = "C1"): Double {
         var wins = 0
         repeat(games) { i ->
-            val r = Match.play(engine, campaign, seed = 10_000L + i, agents = make(i.toLong()))
+            val r = Match.play(engine, campaign, seed = 10_000L + i, agents = make(i.toLong()), maxSteps = 20000)
             assertTrue(r.finished, "game $i did not finish in ${r.steps} steps")
             if (r.winner == side) wins++
         }
@@ -64,6 +64,23 @@ class AgentTest {
         val usRate = winRate({ mapOf(Side.US to HeuristicAgent(engine, seed = it), Side.PRC to RandomAgent(it)) }, Side.US, 100, "C2")
         val prcRate = winRate({ mapOf(Side.US to RandomAgent(it), Side.PRC to HeuristicAgent(engine, seed = it)) }, Side.PRC, 100, "C2")
         println("C2 normal vs random: US $usRate / PRC $prcRate")
+        assertTrue(usRate >= 0.7, "US win rate $usRate")
+        assertTrue(prcRate >= 0.7, "PRC win rate $prcRate")
+    }
+
+    @Test
+    fun `prolonged combat games with enablers finish and normal AI beats a random player`() {
+        repeat(30) { i ->
+            val r = Match.play(
+                engine, "C3", seed = i.toLong(),
+                agents = mapOf(Side.US to HeuristicAgent(engine, seed = i.toLong()), Side.PRC to HeuristicAgent(engine, seed = i + 1L)),
+                maxSteps = 20000,
+            )
+            assertTrue(r.finished, "seed $i did not finish in ${r.steps} steps")
+        }
+        val usRate = winRate({ mapOf(Side.US to HeuristicAgent(engine, seed = it), Side.PRC to RandomAgent(it)) }, Side.US, 40, "C3")
+        val prcRate = winRate({ mapOf(Side.US to RandomAgent(it), Side.PRC to HeuristicAgent(engine, seed = it)) }, Side.PRC, 40, "C3")
+        println("C3 normal vs random: US $usRate / PRC $prcRate")
         assertTrue(usRate >= 0.7, "US win rate $usRate")
         assertTrue(prcRate >= 0.7, "PRC win rate $prcRate")
     }
