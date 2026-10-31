@@ -14,6 +14,8 @@ data class SavedGame(
     val rules: RuleSettings,
     val state: GameState,
     val meta: Map<String, String> = emptyMap(),
+    /** リプレイ用の対局記録。 */
+    val record: GameRecord? = null,
 ) {
     companion object {
         /** 保存形式の版。互換性のない変更をしたら上げる。 */
@@ -33,5 +35,27 @@ data class SavedGame(
     }
 }
 
-fun Engine.save(state: GameState, meta: Map<String, String> = emptyMap()): String =
-    SavedGame.encode(SavedGame(contentVersion = content.version, rules = rules, state = state, meta = meta))
+fun Engine.save(state: GameState, meta: Map<String, String> = emptyMap(), record: GameRecord? = null): String =
+    SavedGame.encode(SavedGame(contentVersion = content.version, rules = rules, state = state, meta = meta, record = record))
+
+/** 対局の記録。エンジンは決定的なので、キャンペーン・種・行動列があれば対局を完全に再現できる。 */
+@Serializable
+data class GameRecord(
+    val campaignId: String,
+    val seed: Long,
+    val actions: List<Action> = emptyList(),
+) {
+    fun plus(action: Action): GameRecord = copy(actions = actions + action)
+}
+
+/** 記録から、各行動の後の状態を順に作る（先頭は対局開始時の状態）。 */
+fun Engine.replay(record: GameRecord): List<GameState> {
+    val states = ArrayList<GameState>(record.actions.size + 1)
+    var s = newGame(record.campaignId, record.seed)
+    states += s
+    for (a in record.actions) {
+        s = apply(s, a)
+        states += s
+    }
+    return states
+}

@@ -3,8 +3,12 @@ name: Android CI
 on:
   push:
     branches: ["**"]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -22,14 +26,48 @@ jobs:
       - name: Engine and AI unit tests
         run: ./gradlew :engine:test :ai:test --stacktrace
 
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Prepare signing key (when the secret is set)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.AFWI_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/afwi.jks"
+            echo "AFWI_KEYSTORE_PATH=$RUNNER_TEMP/afwi.jks" >> "$GITHUB_ENV"
+          else
+            echo "No signing key secret: the release APK is signed with the debug key."
+          fi
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "AFWI_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "AFWI_VERSION_CODE=$((GITHUB_RUN_NUMBER + 100))" >> "$GITHUB_ENV"
+
+      - name: Build debug and release APKs
+        env:
+          AFWI_KEYSTORE_PASSWORD: ${{ secrets.AFWI_KEYSTORE_PASSWORD }}
+          AFWI_KEY_ALIAS: ${{ secrets.AFWI_KEY_ALIAS }}
+          AFWI_KEY_PASSWORD: ${{ secrets.AFWI_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: afwi-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: afwi-release-apk
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Publish GitHub release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
 
       - name: Upload test reports
         if: failure()

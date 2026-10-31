@@ -14,14 +14,30 @@ android {
         applicationId = "afwi.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-m1"
+        // CI ではタグから版番号を渡す。手元のビルドは既定値
+        versionCode = (System.getenv("AFWI_VERSION_CODE") ?: "5").toInt()
+        versionName = System.getenv("AFWI_VERSION_NAME") ?: "1.0.0"
+    }
+
+    // 配布用の署名鍵は環境変数で渡す（リポジトリには入れない）。未設定ならデバッグ鍵で署名する
+    val keystorePath = System.getenv("AFWI_KEYSTORE_PATH")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("AFWI_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("AFWI_KEY_ALIAS")
+                keyPassword = System.getenv("AFWI_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
-            // R8 による縮小と署名は M5 で設定する
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 

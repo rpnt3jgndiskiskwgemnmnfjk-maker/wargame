@@ -59,11 +59,19 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
                 val game = ui.game
                 if (ui.screen == Screen.SETTINGS) {
                     SettingsScreen(ui.settings, vm::updateSettings, vm::backToHome)
+                } else if (ui.screen == Screen.RULES) {
+                    RulesScreen(vm::backToHome)
+                } else if (ui.screen == Screen.REPLAY) {
+                    ReplayScreen(vm.engine, ui, vm::replayStep, vm::replayViewer, vm::backToHome)
                 } else if (game == null || ui.screen == Screen.HOME) {
                     HomeScreen(
                         engine = vm.engine,
                         hasSave = ui.hasSave,
+                        hasLastGame = ui.hasLastGame,
+                        error = ui.error,
                         onResume = vm::resume,
+                        onReplay = vm::openReplay,
+                        onRules = vm::openRules,
                         onSettings = vm::openSettings,
                         onHotseat = { campaign -> vm.newHotseatGame(campaign) },
                         onCpu = { campaign, side, difficulty -> vm.newCpuGame(campaign, side, difficulty) },
@@ -71,7 +79,7 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
                 } else {
                     when (ui.screen) {
                         Screen.HANDOFF -> HandoffScreen(ui.holder, vm::confirmHandoff)
-                        Screen.RESULT -> ResultScreen(vm.engine.viewFor(game, ui.holder), vm::backToHome)
+                        Screen.RESULT -> ResultScreen(vm.engine.viewFor(game, ui.holder), vm::openReplay, vm::backToHome)
                         else -> PlayScreen(
                             view = vm.engine.viewFor(game, ui.holder),
                             engine = vm.engine,
@@ -98,7 +106,11 @@ private fun modeLabel(mode: Mode): String = when (mode) {
 private fun HomeScreen(
     engine: Engine,
     hasSave: Boolean,
+    hasLastGame: Boolean,
+    error: String?,
     onResume: () -> Unit,
+    onReplay: () -> Unit,
+    onRules: () -> Unit,
     onSettings: () -> Unit,
     onHotseat: (String) -> Unit,
     onCpu: (String, Side, Difficulty) -> Unit,
@@ -113,6 +125,7 @@ private fun HomeScreen(
     ) {
         Text("AFWI", fontSize = 40.sp, fontWeight = FontWeight.Bold)
         Text("Air Force Wargame: Indo-Pacific(非公式アプリ)", style = MaterialTheme.typography.titleMedium)
+        if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
         if (hasSave) {
             Button(onClick = onResume, modifier = Modifier.fillMaxWidth()) { Text("続きから遊ぶ(自動保存した対局)") }
         }
@@ -154,6 +167,10 @@ private fun HomeScreen(
         }
         OutlinedButton(onClick = { onHotseat(campaignId) }, modifier = Modifier.fillMaxWidth()) {
             Text("ホットシートで対局を始める(1台を交代で使う)")
+        }
+        OutlinedButton(onClick = onRules, modifier = Modifier.fillMaxWidth()) { Text("ルール解説") }
+        if (hasLastGame) {
+            OutlinedButton(onClick = onReplay, modifier = Modifier.fillMaxWidth()) { Text("前回の対局をリプレイ") }
         }
         OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("ルール設定") }
         Text(
@@ -567,7 +584,7 @@ private fun LogSection(log: List<String>) {
 }
 
 @Composable
-private fun ResultScreen(view: PlayerView, onHome: () -> Unit) {
+private fun ResultScreen(view: PlayerView, onReplay: () -> Unit, onHome: () -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -582,6 +599,7 @@ private fun ResultScreen(view: PlayerView, onHome: () -> Unit) {
                 Text("${Ja.side(view.opponent.side)}: ${view.opponent.vp ?: 0} VP(${view.opponent.mission?.let { Ja.mission(it) } ?: ""})")
             }
         }
+        Button(onClick = onReplay, modifier = Modifier.fillMaxWidth()) { Text("リプレイを見る(隠し情報をすべて開いて1手ずつ)") }
         OutlinedButton(onClick = onHome, modifier = Modifier.fillMaxWidth()) { Text("ホームへ戻る") }
         LogSection(view.log)
     }

@@ -6,7 +6,9 @@ import afwi.ai.HeuristicAgent
 import afwi.engine.Action
 import afwi.engine.Content
 import afwi.engine.Engine
+import afwi.engine.GameRecord
 import afwi.engine.GameState
+import afwi.engine.replay
 import afwi.engine.Phase
 import afwi.engine.SavedGame
 import afwi.engine.Side
@@ -26,7 +28,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.random.Random
 
-enum class Screen { HOME, SETTINGS, HANDOFF, PLAY, RESULT }
+enum class Screen { HOME, SETTINGS, RULES, HANDOFF, PLAY, RESULT, REPLAY }
 
 /** 対局の形式。CPU のときは人間側の陣営と難易度を持つ。 */
 sealed interface Mode {
@@ -47,7 +49,14 @@ data class UiState(
     val error: String? = null,
     /** 続きから再開できる保存データがある。 */
     val hasSave: Boolean = false,
+    /** リプレイできる前回の対局がある。 */
+    val hasLastGame: Boolean = false,
     val settings: AppSettings = AppSettings(),
+    /** リプレイ中の各手の後の状態と、いま見ている手の番号。 */
+    val replayStates: List<GameState> = emptyList(),
+    val replayActions: List<Action> = emptyList(),
+    val replayIndex: Int = 0,
+    val replayViewer: Side = Side.US,
 )
 
 /**
@@ -58,12 +67,18 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private val content = Content.loadBundled()
     private val settingsStore = SettingsStore(app)
     private val saveFile = File(app.filesDir, "save.json")
+    private val lastGameFile = File(app.filesDir, "lastgame.json")
+
+    /** 対局の記録（リプレイ用）。行動を確定するたびに足していく。 */
+    private var record: GameRecord? = null
 
     /** 対局ごとに、そのときのルール設定で作り直す。 */
     var engine = Engine(content)
         private set
 
-    private val _ui = MutableStateFlow(UiState(hasSave = loadSave() != null, settings = settingsStore.load()))
+    private val _ui = MutableStateFlow(
+        UiState(hasSave = loadSave() != null, hasLastGame = lastGameFile.exists(), settings = settingsStore.load()),
+    )
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     private var cpuAgent: Agent? = null
@@ -72,10 +87,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun newHotseatGame(campaignId: String) {
         cancelCpu()
         engine = Engine(content, _ui.value.settings.toRules())
-        val game = engine.newGame(campaignId, Random.nextLong())
+        val seed = Random.nextLong()
+        val game = engine.newGame(campaignId, seed)
+        record = GameRecord(campaignId, seed)
         _ui.value = UiState(
             screen = Screen.HANDOFF, mode = Mode.Hotseat, game = game, holder = engine.actors(game).first(),
-            settings = _ui.value.settings,
+            settings = _ui.value.settings, hasLastGame = _ui.value.hasLastGame,
         )
         persist()
     }
@@ -86,9 +103,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val seed = Random.nextLong()
         cpuAgent = HeuristicAgent(engine, difficulty, seed)
         val game = engine.newGame(campaignId, seed)
+        record = GameRecord(campaignId, seed)
         _ui.value = UiState(
             screen = Screen.PLAY, mode = Mode.VsCpu(humanSide, difficulty), game = game, holder = humanSide,
-            settings = _ui.value.settings,
+            settings = _ui.value.settings, hasLastGame = _ui.value.hasLastGame,
         )
         persist()
         runCpuIfNeeded()
@@ -103,6 +121,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         cancelCpu()
         engine = Engine(content, saved.rules)
         val game = saved.state
+        record = saved.record
         val mode = if (saved.meta["mode"] == "cpu") {
             val human = Side.valueOf(saved.meta["human"] ?: "US")
             val difficulty = Difficulty.valueOf(saved.meta["difficulty"] ?: "NORMAL")
@@ -112,11 +131,15 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             Mode.Hotseat
         }
         _ui.value = when (mode) {
-            is Mode.VsCpu -> UiState(screen = Screen.PLAY, mode = mode, game = game, holder = mode.humanSide, settings = _ui.value.settings)
+            is Mode.VsCpu -> UiState(
+                screen = Screen.PLAY, mode = mode, game = game, holder = mode.humanSide,
+                settings = _ui.value.settings, hasLastGame = _ui.value.hasLastGame,
+            )
             // ホットシートは、隠し情報を見せないよう受け渡し画面から始める
             is Mode.Hotseat -> UiState(
                 screen = Screen.HANDOFF, mode = mode, game = game,
                 holder = engine.actors(game).firstOrNull() ?: Side.US, settings = _ui.value.settings,
+                hasLastGame = _ui.value.hasLastGame,
             )
         }
         runCpuIfNeeded()
@@ -124,6 +147,52 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openSettings() {
         _ui.value = _ui.value.copy(screen = Screen.SETTINGS)
+    }
+
+    fun openRules() {
+        _ui.value = _ui.value.copy(screen = Screen.RULES)
+    }
+
+    /** 前回終わった対局を、記録から1手ずつ再現して見返す。 */
+    fun openReplay() {
+        val current = _ui.value
+        // 結果画面から開いたときは、手元の記録をそのまま使う（ファイルの書き込みを待たない）
+        val inMemory = record?.takeIf { current.game?.phase == Phase.GAME_OVER }
+        val saved = if (inMemory == null) {
+            runCatching { lastGameFile.readText() }.getOrNull()?.let { SavedGame.decodeOrNull(it, content) }
+        } else null
+        val rec = inMemory ?: saved?.record
+        if (rec == null) {
+            _ui.value = current.copy(hasLastGame = false, error = "リプレイできる対局がありません")
+            return
+        }
+        val rules = saved?.rules ?: engine.rules
+        val viewer = when (val m = current.mode) {
+            is Mode.VsCpu -> if (inMemory != null) m.humanSide else null
+            else -> null
+        } ?: saved?.meta?.get("human")?.let { Side.valueOf(it) } ?: Side.US
+        viewModelScope.launch {
+            val replayEngine = Engine(content, rules)
+            val states = withContext(Dispatchers.Default) { runCatching { replayEngine.replay(rec) }.getOrNull() }
+            if (states == null) {
+                _ui.value = _ui.value.copy(error = "記録を再現できませんでした")
+                return@launch
+            }
+            engine = replayEngine
+            _ui.value = _ui.value.copy(
+                screen = Screen.REPLAY, replayStates = states, replayActions = rec.actions,
+                replayIndex = states.lastIndex, replayViewer = viewer,
+            )
+        }
+    }
+
+    fun replayStep(index: Int) {
+        val st = _ui.value
+        _ui.value = st.copy(replayIndex = index.coerceIn(0, st.replayStates.lastIndex))
+    }
+
+    fun replayViewer(side: Side) {
+        _ui.value = _ui.value.copy(replayViewer = side)
     }
 
     fun updateSettings(settings: AppSettings) {
@@ -149,6 +218,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             _ui.value = current.copy(error = e.message)
             return
         }
+        record = record?.plus(action)
         when (current.mode) {
             is Mode.Hotseat -> afterHotseatAction(current, next)
             is Mode.VsCpu -> {
@@ -197,6 +267,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 val view = engine.viewFor(game, mode.cpuSide)
                 val action = withContext(Dispatchers.Default) { agent.choose(view) }
                 val next = engine.apply(game, action)
+                record = record?.plus(action)
                 _ui.value = afterAction(_ui.value, next).copy(cpuThinking = next.phase != Phase.GAME_OVER)
                 persist()
             }
@@ -213,16 +284,18 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private fun persist() {
         val state = _ui.value
         val game = state.game ?: return
-        val text = if (game.phase == Phase.GAME_OVER) {
-            null
-        } else {
-            val meta = when (val m = state.mode) {
-                is Mode.Hotseat -> mapOf("mode" to "hotseat")
-                is Mode.VsCpu -> mapOf("mode" to "cpu", "human" to m.humanSide.name, "difficulty" to m.difficulty.name)
-            }
-            engine.save(game, meta)
+        val meta = when (val m = state.mode) {
+            is Mode.Hotseat -> mapOf("mode" to "hotseat")
+            is Mode.VsCpu -> mapOf("mode" to "cpu", "human" to m.humanSide.name, "difficulty" to m.difficulty.name)
         }
-        _ui.value = state.copy(hasSave = text != null)
+        val over = game.phase == Phase.GAME_OVER
+        val text = if (over) null else engine.save(game, meta, record)
+        // 終わった対局は、リプレイ用に別のファイルへ残す
+        val lastGame = if (over && record != null) engine.save(game, meta, record) else null
+        _ui.value = _ui.value.copy(hasSave = text != null, hasLastGame = _ui.value.hasLastGame || lastGame != null)
+        if (lastGame != null) {
+            viewModelScope.launch(Dispatchers.IO) { runCatching { lastGameFile.writeText(lastGame) } }
+        }
         val seq = ++saveSeq
         viewModelScope.launch(Dispatchers.IO) {
             // 書き込みが前後しても、最後に確定した状態だけを残す
@@ -246,6 +319,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun backToHome() {
         cancelCpu()
-        _ui.value = UiState(hasSave = loadSave() != null || _ui.value.hasSave, settings = _ui.value.settings)
+        _ui.value = UiState(
+            hasSave = loadSave() != null || _ui.value.hasSave,
+            hasLastGame = lastGameFile.exists() || _ui.value.hasLastGame,
+            settings = _ui.value.settings,
+        )
     }
 }

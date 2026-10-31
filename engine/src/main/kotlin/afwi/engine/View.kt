@@ -71,8 +71,11 @@ data class PlayerView(
     val legalActions: List<Action>,
 )
 
-fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
-    val over = s.phase == Phase.GAME_OVER
+/**
+ * ある陣営から見た対局。revealAll を true にすると隠し情報をすべて開く（リプレイと結果画面用）。
+ */
+fun Engine.viewFor(s: GameState, viewer: Side, revealAll: Boolean = false): PlayerView {
+    val over = s.phase == Phase.GAME_OVER || revealAll
     val enemy = viewer.opponent
     val tokens = s.tokens.values.mapNotNull { t ->
         val type = content.tokenType(t.typeId)
@@ -123,12 +126,12 @@ fun Engine.viewFor(s: GameState, viewer: Side): PlayerView {
                 baseDefenseReasons(side, base == BaseKind.AIRBASE, s.tokens.values, s.player(side).posture)
             }
         },
-        pending = s.pending?.takeIf { it.decider == viewer },
+        pending = if (revealAll) null else s.pending?.takeIf { it.decider == viewer },
         enablerPool = if (s.phase == Phase.ENABLERS) enablerPool(s, viewer) else emptyList(),
         enablerLimit = enablerLimit(s, viewer),
         log = s.log.mapNotNull { it.textFor(viewer) },
         winner = s.winner,
         gameOverReason = s.gameOverReason,
-        legalActions = legalActions(s, viewer),
+        legalActions = if (revealAll) emptyList() else legalActions(s, viewer),
     )
 }
