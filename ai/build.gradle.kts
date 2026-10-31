@@ -21,5 +21,13 @@ dependencies {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform { excludeTags("tuning") }
+}
+
+// AI の重みの調整用（時間がかかる）。結果は標準出力の TUNE 行に出る
+tasks.register<Test>("tuning") {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("tuning") }
+    testLogging { showStandardStreams = true }
 }

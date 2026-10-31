@@ -17,7 +17,12 @@ AFWI（Air Force Wargame: Indo-Pacific）の調査資料と、そのルールで
 | `ai/` | CPU の対戦相手（純粋な Kotlin）。自分の視点だけを見て合法手から選ぶ。初級・中級の2段階 |
 | `app/` | Android アプリ（Jetpack Compose）。CPU 対戦とホットシート |
 
-現在は M4 の版です。用意されたキャンペーン5本（遭遇戦・大会・長期戦・世界が見ている・予備戦力）を、CPU 対戦（米・中どちらでも、初級・中級）かホットシートで遊べます。対局は自動保存され、アプリを閉じても続きから遊べます。未確認のルールはホーム画面の「ルール設定」で選べます。
+現在は M5（第1版の候補）です。用意されたキャンペーン5本（遭遇戦・大会・長期戦・世界が見ている・予備戦力）を、CPU 対戦（米・中どちらでも、初級・中級）かホットシートで遊べます。
+
+- 対局は自動保存され、アプリを閉じても続きから遊べる
+- 終わった対局は、隠し情報をすべて開いた状態で1手ずつリプレイできる
+- ホーム画面の「ルール解説」でルールの要約を読める
+- 未確認のルールは「ルール設定」で選べる
 
 遊べる範囲は次のとおりです。
 
@@ -51,3 +56,39 @@ GitHub Actions（`.github/workflows/android.yml`）が、push のたびにテス
 1. Artifacts からダウンロードした zip を展開し、`app-debug.apk` を端末に移す。
 2. 端末の設定で、ファイルを開くアプリに「不明なアプリのインストール」を許可する。
 3. APK を開いてインストールする。
+
+## 配布用 APK（署名付き）
+
+`v` で始まるタグ（例: `v1.0.0`）を push すると、GitHub Actions が配布用 APK を作り、GitHub のリリースに添付します。タグを付けない push でも、配布用 APK は Artifacts（`afwi-release-apk`）に出ます。
+
+署名鍵を登録していない場合、配布用 APK はデバッグ鍵で署名されます。インストールはできますが、別の端末で作った版の上には更新できません。自分の鍵で署名するには、次の手順で鍵を作って GitHub の Secrets に登録します。
+
+1. 鍵を作る（パスワードと別名は自分で決める。鍵ファイルは失くすと更新版を配れなくなるので、2か所に保管する）。
+
+    ```bash
+    keytool -genkeypair -v -keystore afwi.jks -alias afwi -keyalg RSA -keysize 2048 -validity 10000
+    ```
+
+2. 鍵ファイルを1行の文字列にする。
+
+    ```bash
+    base64 -w0 afwi.jks > afwi.jks.b64
+    ```
+
+3. リポジトリの Settings → Secrets and variables → Actions に、次の4つを登録する。
+
+    | 名前 | 中身 |
+    |---|---|
+    | `AFWI_KEYSTORE_BASE64` | `afwi.jks.b64` の中身 |
+    | `AFWI_KEYSTORE_PASSWORD` | 鍵ストアのパスワード |
+    | `AFWI_KEY_ALIAS` | 鍵の別名（上の例では `afwi`） |
+    | `AFWI_KEY_PASSWORD` | 鍵のパスワード |
+
+## AI の調整
+
+CPU の評価の重みは `ai/src/main/kotlin/afwi/ai/Agents.kt` の `Weights` にあります。候補を `ai/src/test/kotlin/afwi/ai/TuningTest.kt` に並べ、次のコマンドで既定値の AI と対戦させて比べられます（時間がかかります）。
+
+```bash
+./gradlew :ai:tuning
+```
+

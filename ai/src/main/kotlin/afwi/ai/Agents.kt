@@ -51,10 +51,30 @@ enum class Difficulty(val labelJa: String) {
  * 一番高い点数でもしきい値以下なら手番を終える（何もしていなければパス）。
  * 確率は D4 の出目から正確に計算する。
  */
+/**
+ * 評価の重み。AI 同士の自動対戦で比べて決めた値を既定にしている（TuningTest）。
+ * 2026-10-31 の調整: 危険を軽く見て弾切れを恐れない設定が、旧既定値に 53.7%（別の種での検証、475 局）で勝ち越した。
+ */
+data class Weights(
+    /** これを超える手がなければ手番を終える。 */
+    val endThreshold: Double = 0.05,
+    val moveCost: Double = 0.03,
+    /** 撃破でミッションの点にならなくても、敵の戦力を減らす価値。 */
+    val threatRemoval: Double = 0.5,
+    /** 相手の戦闘機の射程に入る危険（捕捉されているとき／いないとき）。 */
+    val riskAcquired: Double = 0.15,
+    val riskUnseen: Double = 0.0,
+    /** 弾切れになる損失の大きさ。 */
+    val winchesterScale: Double = 0.5,
+    /** サイバー値3から4（即勝利）を狙う価値。 */
+    val cyberWinValue: Double = 20.0,
+)
+
 class HeuristicAgent(
     private val engine: Engine,
     private val difficulty: Difficulty = Difficulty.NORMAL,
     seed: Long = 0,
+    private val w: Weights = Weights(),
 ) : Agent {
     private val rnd = Random(seed)
 
@@ -245,7 +265,7 @@ class HeuristicAgent(
             return (scored.map { it.first } + end).random(rnd)
         }
         val best = scored.maxBy { it.second }
-        return if (best.second > END_THRESHOLD) best.first else end
+        return if (best.second > w.endThreshold) best.first else end
     }
 
     // ---- 点数付け ----
@@ -271,11 +291,11 @@ class HeuristicAgent(
         val vpClass = t.type?.vpClass ?: VpClass.OTHER
         val rec = CaptureRecord(CaptureKind.TOKEN, ato = ctx.view.ato, typeId = t.type?.id, vpClass = vpClass, onGround = onGround)
         // ミッションで点にならなくても、敵の戦力を減らす価値はある
-        return engine.recordVp(ctx.view.me.mission, rec) + THREAT_REMOVAL
+        return engine.recordVp(ctx.view.me.mission, rec) + w.threatRemoval
     }
 
     /** 射撃すると弾切れになる見込みの損失。 */
-    private fun winchesterCost(type: TokenType): Double = when (type.winchester) {
+    private fun winchesterCost(type: TokenType): Double = w.winchesterScale * when (type.winchester) {
         WinchesterType.STANDARD -> 0.75 * 0.4
         WinchesterType.INFINITE -> 0.5 * 0.3
         WinchesterType.SALVO -> 0.75 * 0.2
@@ -309,7 +329,7 @@ class HeuristicAgent(
         return when (e) {
             is Effect.AcquireDice -> if (unseen == 0) -1.0 else 0.6 * minOf(2.5, unseen.toDouble())
             is Effect.AcquireCyber -> if (unseen == 0) -1.0 else 0.6 * minOf(cyber * e.multiplier, unseen)
-            Effect.CyberAttempt -> p(cyber + 1) * if (cyber >= 3) 20.0 else 1.6
+            Effect.CyberAttempt -> p(cyber + 1) * if (cyber >= 3) w.cyberWinValue else 1.6
             is Effect.CyberDegrade -> {
                 val enemyCyber = view.opponent.cyber
                 if (enemyCyber == 0) -1.0 else minOf(e.amount, enemyCyber) * if (enemyCyber >= 3) 3.0 else 1.3
@@ -378,7 +398,7 @@ class HeuristicAgent(
         val grounded = if (sq.faceUp) {
             ctx.view.tokens.count { it.squadronId == sq.id && it.zone == Zone.Grounded }
         } else 2
-        val destroyValue = sqVp + grounded * (1.0 + THREAT_REMOVAL)
+        val destroyValue = sqVp + grounded * (1.0 + w.threatRemoval)
         val perHit = if (sq.damage >= 1 || weapon.explosive) destroyValue else destroyValue * 0.5
         return p(weapon.hit) * perHit - winchesterCost(st)
     }
@@ -438,7 +458,7 @@ class HeuristicAgent(
         val type = tok.type ?: return 0.0
         val from = ctx.coord(tok)
         val to = engine.coord(a.to, ctx.me)
-        return positionValue(ctx, tok, type, to) - positionValue(ctx, tok, type, from) - MOVE_COST
+        return positionValue(ctx, tok, type, to) - positionValue(ctx, tok, type, from) - w.moveCost
     }
 
     /** その位置にいるときの価値：攻撃の機会から、撃たれる危険を引く。 */
@@ -452,7 +472,7 @@ class HeuristicAgent(
             if (air != null && d <= air.range && e.type?.cls?.isAircraft != false) v += if (e.acquired) 0.7 else 0.3
             // 相手の戦闘機の射程（多くは1）に入ると撃たれる危険がある
             if (d <= 1 && (e.masked || e.type?.air != null)) {
-                v -= if (tok.acquired) RISK_ACQUIRED else RISK_UNSEEN
+                v -= if (tok.acquired) w.riskAcquired else w.riskUnseen
             }
         }
         if (surface != null && !tok.winchester) {
@@ -477,11 +497,6 @@ class HeuristicAgent(
     }
 
     private companion object {
-        const val END_THRESHOLD = 0.05
-        const val MOVE_COST = 0.03
-        const val THREAT_REMOVAL = 0.5
-        const val RISK_ACQUIRED = 0.6
-        const val RISK_UNSEEN = 0.25
         const val EASY_BLUNDER = 0.3
     }
 }
