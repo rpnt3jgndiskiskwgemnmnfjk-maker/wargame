@@ -1,0 +1,89 @@
+name: Android CI
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "リリースする版のタグ（例: v1.0.0）。空ならビルドだけ"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Engine and AI unit tests
+        run: ./gradlew :engine:test :ai:test --stacktrace
+
+      - name: Prepare signing key (when the secret is set)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.AFWI_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/afwi.jks"
+            echo "AFWI_KEYSTORE_PATH=$RUNNER_TEMP/afwi.jks" >> "$GITHUB_ENV"
+          else
+            echo "No signing key secret: the release APK is signed with the debug key."
+          fi
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        env:
+          TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: |
+          echo "AFWI_VERSION_NAME=${TAG#v}" >> "$GITHUB_ENV"
+          echo "AFWI_VERSION_CODE=$((GITHUB_RUN_NUMBER + 100))" >> "$GITHUB_ENV"
+
+      - name: Build debug and release APKs
+        env:
+          AFWI_KEYSTORE_PASSWORD: ${{ secrets.AFWI_KEYSTORE_PASSWORD }}
+          AFWI_KEY_ALIAS: ${{ secrets.AFWI_KEY_ALIAS }}
+          AFWI_KEY_PASSWORD: ${{ secrets.AFWI_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: afwi-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: afwi-release-apk
+          path: app/build/outputs/apk/release/*.apk
+
+      - name: Publish GitHub release (tag push, or manual run with a tag)
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          # 手動実行のときは、このタグを実行した commit に付けて作る
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          files: app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            engine/build/reports/tests/
+            ai/build/reports/tests/

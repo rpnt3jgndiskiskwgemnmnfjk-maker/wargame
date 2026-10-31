@@ -1,0 +1,1886 @@
+{
+  "version": 1,
+  "tokenTypes": [
+    {
+      "id": "F-22",
+      "nameJa": "F-22 ラプター",
+      "side": "US",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-35A",
+      "nameJa": "F-35A ライトニングII",
+      "side": "US",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-15C",
+      "nameJa": "F-15C イーグル",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-15E",
+      "nameJa": "F-15E ストライクイーグル",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "F-16C",
+      "nameJa": "F-16C ファイティングファルコン",
+      "side": "US",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "MQ-9",
+      "nameJa": "MQ-9 リーパー",
+      "side": "US",
+      "cls": "UAS_ATTACK",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 1,
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "INFINITE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "RQ-4",
+      "nameJa": "RQ-4 グローバルホーク",
+      "side": "US",
+      "cls": "UAS_RECON",
+      "move": 1,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "winchester": "NONE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "E-3",
+      "nameJa": "E-3 セントリー",
+      "side": "US",
+      "cls": "AEW",
+      "move": 1,
+      "acqRange": 3,
+      "acqTries": 2,
+      "acqBonus": 2,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "EC-130",
+      "nameJa": "EC-130 コンパスコール",
+      "side": "US",
+      "cls": "EW",
+      "move": 1,
+      "acqRange": 3,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "B-52H",
+      "nameJa": "B-52H ストラトフォートレス",
+      "side": "US",
+      "cls": "BOMBER",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 3,
+      "surface": {
+        "range": 6,
+        "hit": 2,
+        "explosive": true
+      },
+      "winchester": "STANDARD",
+      "vpClass": "BOMBER"
+    },
+    {
+      "id": "US-ADA",
+      "nameJa": "NASAMS 防空",
+      "side": "US",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 2,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 2,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "US-DDG",
+      "nameJa": "アーレイ・バーク級駆逐艦",
+      "side": "US",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 7,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "J-20",
+      "nameJa": "J-20 威龍",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN5",
+      "move": 2,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-16",
+      "nameJa": "J-16",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-10",
+      "nameJa": "J-10 猛龍",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "JH-7",
+      "nameJa": "JH-7 飛豹",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 3
+      },
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "J-15",
+      "nameJa": "J-15 飛鯊",
+      "side": "PRC",
+      "cls": "FIGHTER_GEN4",
+      "move": 2,
+      "acqRange": 2,
+      "acqValue": 1,
+      "air": {
+        "range": 1,
+        "hit": 2
+      },
+      "surface": {
+        "range": 1,
+        "hit": 2
+      },
+      "winchester": "STANDARD",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "TB-001",
+      "nameJa": "TB-001 双尾蠍",
+      "side": "PRC",
+      "cls": "UAS_ATTACK",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 1,
+      "surface": {
+        "range": 1,
+        "hit": 3
+      },
+      "winchester": "INFINITE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "WX-10",
+      "nameJa": "WX-10 神雕",
+      "side": "PRC",
+      "cls": "UAS_RECON",
+      "move": 1,
+      "acqRange": 2,
+      "acqBonus": 1,
+      "acqValue": 2,
+      "winchester": "NONE",
+      "vpClass": "OTHER"
+    },
+    {
+      "id": "KJ-2000",
+      "nameJa": "KJ-2000 空警2000",
+      "side": "PRC",
+      "cls": "AEW",
+      "move": 1,
+      "acqRange": 3,
+      "acqTries": 2,
+      "acqBonus": 2,
+      "acqValue": 3,
+      "winchester": "NONE",
+      "vpClass": "AEW"
+    },
+    {
+      "id": "H-6K",
+      "nameJa": "H-6K 轟6",
+      "side": "PRC",
+      "cls": "BOMBER",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 3,
+      "surface": {
+        "range": 6,
+        "hit": 2,
+        "explosive": true
+      },
+      "winchester": "STANDARD",
+      "vpClass": "BOMBER"
+    },
+    {
+      "id": "HQ-9",
+      "nameJa": "HQ-9 紅旗9",
+      "side": "PRC",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 2,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 2,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "SA-21",
+      "nameJa": "SA-21 (S-400)",
+      "side": "PRC",
+      "cls": "ADA",
+      "move": 0,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 4,
+        "hit": 2
+      },
+      "winchester": "NONE",
+      "wez": 4,
+      "vpClass": "ADA"
+    },
+    {
+      "id": "PRC-DDG",
+      "nameJa": "052D型駆逐艦",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 7,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "PRC-CG",
+      "nameJa": "055型駆逐艦",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "air": {
+        "range": 3,
+        "hit": 2
+      },
+      "surface": {
+        "range": 3,
+        "hit": 2
+      },
+      "winchester": "SALVO",
+      "salvos": 9,
+      "wez": 3,
+      "vpClass": "SHIP"
+    },
+    {
+      "id": "PRC-FAC",
+      "nameJa": "022型ミサイル艇隊",
+      "side": "PRC",
+      "cls": "SHIP",
+      "move": 1,
+      "acqRange": 2,
+      "acqValue": 2,
+      "surface": {
+        "range": 2,
+        "hit": 3
+      },
+      "winchester": "SALVO",
+      "salvos": 2,
+      "vpClass": "SHIP"
+    }
+  ],
+  "squadrons": [
+    {
+      "id": "US-SQ-124ATKS",
+      "side": "US",
+      "nameJa": "第124攻撃飛行隊",
+      "tokenType": "MQ-9",
+      "count": 4,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "US-SQ-69BS",
+      "side": "US",
+      "nameJa": "第69爆撃飛行隊",
+      "tokenType": "B-52H",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-23BS",
+      "side": "US",
+      "nameJa": "第23爆撃飛行隊",
+      "tokenType": "B-52H",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-9ERS",
+      "side": "US",
+      "nameJa": "第9遠征偵察飛行隊",
+      "tokenType": "RQ-4",
+      "count": 2,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "US-SQ-960AACS",
+      "side": "US",
+      "nameJa": "第960空中管制飛行隊",
+      "tokenType": "E-3",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "US-SQ-90FS",
+      "side": "US",
+      "nameJa": "第90戦闘飛行隊",
+      "tokenType": "F-22",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-44FS",
+      "side": "US",
+      "nameJa": "第44戦闘飛行隊",
+      "tokenType": "F-15C",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-34FS",
+      "side": "US",
+      "nameJa": "第34戦闘飛行隊",
+      "tokenType": "F-35A",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-391FS",
+      "side": "US",
+      "nameJa": "第391戦闘飛行隊",
+      "tokenType": "F-15E",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "US-SQ-480FS",
+      "side": "US",
+      "nameJa": "第480戦闘飛行隊",
+      "tokenType": "F-16C",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-UAS",
+      "side": "PRC",
+      "nameJa": "空軍無人機団",
+      "tokenType": "TB-001",
+      "count": 4,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "PRC-SQ-HQ9",
+      "side": "PRC",
+      "nameJa": "防空第3旅団",
+      "tokenType": "HQ-9",
+      "count": 1,
+      "generate": "AIRBASE",
+      "flying": false
+    },
+    {
+      "id": "PRC-SQ-RECON",
+      "side": "PRC",
+      "nameJa": "空軍無人機旅団",
+      "tokenType": "WX-10",
+      "count": 2,
+      "generate": "ANY_BAND"
+    },
+    {
+      "id": "PRC-SQ-AEW",
+      "side": "PRC",
+      "nameJa": "早期警戒航空団",
+      "tokenType": "KJ-2000",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "PRC-SQ-SA21",
+      "side": "PRC",
+      "nameJa": "防空第5団",
+      "tokenType": "SA-21",
+      "count": 1,
+      "generate": "AIRBASE",
+      "flying": false
+    },
+    {
+      "id": "PRC-SQ-J10",
+      "side": "PRC",
+      "nameJa": "空軍第124旅団",
+      "tokenType": "J-10",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-H6K",
+      "side": "PRC",
+      "nameJa": "第8爆撃師団",
+      "tokenType": "H-6K",
+      "count": 1,
+      "generate": "BAND1_OR_STANDOFF"
+    },
+    {
+      "id": "PRC-SQ-J20",
+      "side": "PRC",
+      "nameJa": "空軍第5旅団",
+      "tokenType": "J-20",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-J16",
+      "side": "PRC",
+      "nameJa": "空軍第26旅団",
+      "tokenType": "J-16",
+      "count": 4,
+      "generate": "BAND1"
+    },
+    {
+      "id": "PRC-SQ-JH7",
+      "side": "PRC",
+      "nameJa": "空軍第126旅団",
+      "tokenType": "JH-7",
+      "count": 4,
+      "generate": "BAND1"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "C1",
+      "nameJa": "遭遇戦(入門)",
+      "descriptionJa": "1 ATO。任務は消耗(Attrition)、態勢は標準、支援カードなし。米はF-16C、中はJ-10の飛行隊を使う。",
+      "atoCount": 1,
+      "mission": "ATTRITION",
+      "fixedSquadrons": {
+        "US": [
+          "US-SQ-480FS"
+        ],
+        "PRC": [
+          "PRC-SQ-J10"
+        ]
+      },
+      "allowedPostures": [
+        "STANDARD"
+      ],
+      "enablers": false
+    },
+    {
+      "id": "C2",
+      "nameJa": "大会",
+      "descriptionJa": "2 ATO。任務は消耗(Attrition)、態勢は標準、支援カードなし。全飛行隊から4個飛行隊を選ぶ。入札は第1 ATO だけで、第2 ATO は第1 ATO で主導権を取れなかった側が主導権を持つ。",
+      "atoCount": 2,
+      "mission": "ATTRITION",
+      "allowedPostures": [
+        "STANDARD"
+      ],
+      "bidRule": "FIRST_ATO_ONLY_ALTERNATE",
+      "enablers": false
+    },
+    {
+      "id": "C3",
+      "nameJa": "長期戦",
+      "descriptionJa": "5 ATO。ミッション・態勢・支援カードをすべて使う。資源を配分しないと5 ATO目には枯渇する。",
+      "atoCount": 5,
+      "enablers": true
+    },
+    {
+      "id": "C4",
+      "nameJa": "世界が見ている",
+      "descriptionJa": "2 ATO。国際世論を意識した戦い。長距離ミサイルと特殊作戦の支援カード、長距離爆撃機の飛行隊は使えない。空中で撃破した敵1機につき +1(ATO ごとに最大 +2)。第2 ATO は第1 ATO で多く撃破した側が主導権を得る。",
+      "atoCount": 2,
+      "enablers": true,
+      "bannedSquadrons": [
+        "US-SQ-69BS",
+        "US-SQ-23BS",
+        "PRC-SQ-H6K"
+      ],
+      "bannedEnablerTags": [
+        "SOF",
+        "PLARF"
+      ],
+      "bannedEnablers": [
+        "US-EN-31",
+        "US-EN-32"
+      ],
+      "airKillBonusPerAto": 2,
+      "bidRule": "LEADER_AFTER_FIRST"
+    },
+    {
+      "id": "C5",
+      "nameJa": "予備戦力",
+      "descriptionJa": "2 ATO。長引いた戦いで戦力が減った状態。第5世代機と爆撃機は使えず、中国は長距離の防空(SA-21)も使えない。キャンペーン終了時に無傷の飛行隊カード1枚につき +1。",
+      "atoCount": 2,
+      "enablers": true,
+      "bannedSquadrons": [
+        "US-SQ-90FS",
+        "US-SQ-34FS",
+        "US-SQ-69BS",
+        "US-SQ-23BS",
+        "PRC-SQ-J20",
+        "PRC-SQ-H6K",
+        "PRC-SQ-SA21"
+      ],
+      "intactSquadronBonus": true
+    }
+  ],
+  "postures": [
+    {
+      "id": "US-STANDARD",
+      "side": "US",
+      "kind": "STANDARD",
+      "nameJa": "標準",
+      "descriptionJa": "いつでも選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6
+    },
+    {
+      "id": "US-ACE",
+      "side": "US",
+      "kind": "ACE",
+      "nameJa": "ACE(分散運用)",
+      "descriptionJa": "米の基地への攻撃はすべて不利になる。CL からは D4 を振らずに全機が発進する。",
+      "squadronLimit": 3,
+      "enablerLimit": 5,
+      "effects": [
+        "AIRBASE_STRIKES_DISADVANTAGE",
+        "CL_MAX_GENERATION"
+      ]
+    },
+    {
+      "id": "US-SURGE",
+      "side": "US",
+      "kind": "SURGE",
+      "nameJa": "サージ",
+      "descriptionJa": "多くの部隊を出せるが、CL を使えない。",
+      "squadronLimit": 6,
+      "enablerLimit": 7,
+      "effects": [
+        "NO_CL"
+      ]
+    },
+    {
+      "id": "US-HEDGEHOG",
+      "side": "US",
+      "kind": "HEDGEHOG",
+      "nameJa": "ヘッジホッグ",
+      "descriptionJa": "防空(ADA)の駒を1個、基地に発生させる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6,
+      "effects": [
+        "GENERATE_ADA"
+      ],
+      "adaTokenType": "US-ADA"
+    },
+    {
+      "id": "US-STANDOFF",
+      "side": "US",
+      "kind": "STANDOFF",
+      "nameJa": "スタンドオフ",
+      "descriptionJa": "B-52 の飛行隊2枚を上限に数えずに選べる。",
+      "squadronLimit": 3,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "US-SQ-69BS",
+        "US-SQ-23BS"
+      ]
+    },
+    {
+      "id": "PRC-STANDARD",
+      "side": "PRC",
+      "kind": "STANDARD",
+      "nameJa": "標準",
+      "descriptionJa": "いつでも選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6
+    },
+    {
+      "id": "PRC-PLAAF",
+      "side": "PRC",
+      "kind": "PLAAF",
+      "nameJa": "空軍(PLAAF)",
+      "descriptionJa": "支援カードは空軍のものだけを選べる。",
+      "squadronLimit": 6,
+      "enablerLimit": 5,
+      "effects": [
+        "PLAAF_ENABLERS_ONLY"
+      ]
+    },
+    {
+      "id": "PRC-JOINT",
+      "side": "PRC",
+      "kind": "JOINT_OPERATIONS",
+      "nameJa": "統合作戦",
+      "descriptionJa": "飛行隊は飛行部隊だけを選べる。支援カードを多く選べる。",
+      "squadronLimit": 3,
+      "enablerLimit": 9,
+      "effects": [
+        "FLYING_ONLY"
+      ]
+    },
+    {
+      "id": "PRC-ADA",
+      "side": "PRC",
+      "kind": "ADA",
+      "nameJa": "防空(ADA)",
+      "descriptionJa": "防空の飛行隊2枚(HQ-9、SA-21)を上限に数えずに選べる。",
+      "squadronLimit": 4,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "PRC-SQ-HQ9",
+        "PRC-SQ-SA21"
+      ]
+    },
+    {
+      "id": "PRC-STANDOFF",
+      "side": "PRC",
+      "kind": "STANDOFF",
+      "nameJa": "スタンドオフ",
+      "descriptionJa": "H-6K の飛行隊を上限に数えずに選べる(効果は未確認のため推定)。",
+      "squadronLimit": 3,
+      "enablerLimit": 6,
+      "freeSquadrons": [
+        "PRC-SQ-H6K"
+      ]
+    }
+  ],
+  "enablers": [
+    {
+      "id": "US-EN-01",
+      "side": "US",
+      "nameJa": "AC-130 ガンシップ",
+      "family": "AFSOC",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "中国が特殊作戦(SOF)カードを使った直後に使う。そのカードを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SOF"
+      }
+    },
+    {
+      "id": "US-EN-02",
+      "side": "US",
+      "nameJa": "人員救難",
+      "family": "AFSOC",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "米の航空機が撃破された直後に使う。その機体を米1帯に戻し、撃破に数えない。",
+      "response": {
+        "trigger": "OWN_AIRCRAFT_LOST",
+        "effect": "RECOVER_AIRCRAFT"
+      }
+    },
+    {
+      "id": "US-EN-03",
+      "side": "US",
+      "nameJa": "前方基地",
+      "family": "AFSOC",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "米が対地攻撃を宣言した直後に使う。その攻撃は自動で命中する。",
+      "response": {
+        "trigger": "OWN_SURFACE_STRIKE",
+        "effect": "AUTO_HIT"
+      }
+    },
+    {
+      "id": "US-EN-04",
+      "side": "US",
+      "nameJa": "SOF偵察",
+      "family": "AFSOC",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ中国の駒を捕捉する。出目4ならサイバー値も+1。",
+      "action": {
+        "type": "acquireDice",
+        "cyberOn4": true
+      }
+    },
+    {
+      "id": "US-EN-05",
+      "side": "US",
+      "nameJa": "SOFサイバー浸透",
+      "family": "AFSOC",
+      "use": "SINGLE",
+      "tags": [
+        "SOF",
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー判定を1回行う。",
+      "action": {
+        "type": "cyberAttempt"
+      }
+    },
+    {
+      "id": "US-EN-06",
+      "side": "US",
+      "nameJa": "空中給油",
+      "family": "MOB/MAIN",
+      "use": "MULTIPLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "態勢の上限とは別に、飛行隊を1枚基地に追加する。",
+      "action": {
+        "type": "extraSquadron"
+      }
+    },
+    {
+      "id": "US-EN-07",
+      "side": "US",
+      "nameJa": "クイックターン",
+      "family": "MOB/MAIN",
+      "use": "SINGLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "米の航空機が撃破された直後に使う。その機体を米1帯に戻し、撃破に数えない。",
+      "response": {
+        "trigger": "OWN_AIRCRAFT_LOST",
+        "effect": "RECOVER_AIRCRAFT"
+      }
+    },
+    {
+      "id": "US-EN-08",
+      "side": "US",
+      "nameJa": "緊急補給",
+      "family": "MOB/MAIN",
+      "use": "SINGLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "使用済みの支援カードを1枚手札に戻す。すぐに使える。",
+      "action": {
+        "type": "returnSpent"
+      }
+    },
+    {
+      "id": "US-EN-09",
+      "side": "US",
+      "nameJa": "弾薬改良",
+      "family": "MOB/MAIN",
+      "use": "SINGLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "このATOの間、米の空対空判定はすべて有利。",
+      "action": {
+        "type": "modifier",
+        "mod": "OWN_AIR_TO_AIR_ADV"
+      }
+    },
+    {
+      "id": "US-EN-10",
+      "side": "US",
+      "nameJa": "フライングクルーチーフ",
+      "family": "MOB/MAIN",
+      "use": "MULTIPLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "このATOの間、CLから発進する飛行隊1個がD4を振らずに全機発進する。",
+      "action": {
+        "type": "modifier",
+        "mod": "CL_MAX_GENERATION"
+      }
+    },
+    {
+      "id": "US-EN-11",
+      "side": "US",
+      "nameJa": "サイバー偵察",
+      "family": "AF CYBER",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー値の数だけ中国の駒を捕捉する。",
+      "action": {
+        "type": "acquireCyber",
+        "multiplier": 1
+      }
+    },
+    {
+      "id": "US-EN-12",
+      "side": "US",
+      "nameJa": "サイバー浸透",
+      "family": "AF CYBER",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー判定を1回行う。",
+      "action": {
+        "type": "cyberAttempt"
+      }
+    },
+    {
+      "id": "US-EN-13",
+      "side": "US",
+      "nameJa": "防御サイバー",
+      "family": "AF CYBER",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "中国のサイバー値を1下げる。または、中国のサイバーカードの直後に使って打ち消す。",
+      "action": {
+        "type": "cyberDegrade",
+        "amount": 1
+      },
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "CYBER"
+      }
+    },
+    {
+      "id": "US-EN-14",
+      "side": "US",
+      "nameJa": "攻撃サイバー",
+      "family": "AF CYBER",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー値の数だけ中国の駒を盤上から除く。または、中国に同じ数の支援カードを捨てさせる。",
+      "action": {
+        "type": "choice",
+        "options": [
+          {
+            "type": "removeTokens",
+            "multiplier": 1
+          },
+          {
+            "type": "forceDiscard"
+          }
+        ],
+        "labelsJa": [
+          "駒を除く",
+          "手札を捨てさせる"
+        ]
+      }
+    },
+    {
+      "id": "US-EN-15",
+      "side": "US",
+      "nameJa": "サイバー対無人機",
+      "family": "AF CYBER",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー値の数だけ中国の無人機を撃破する。",
+      "action": {
+        "type": "destroyUas"
+      }
+    },
+    {
+      "id": "US-EN-16",
+      "side": "US",
+      "nameJa": "電子戦スプーフィング",
+      "family": "AF EW",
+      "use": "SINGLE",
+      "tags": [
+        "EW"
+      ],
+      "descriptionJa": "このATOの間、中国の捕捉判定はすべて不利。",
+      "action": {
+        "type": "modifier",
+        "mod": "ENEMY_ACQUIRE_DIS"
+      }
+    },
+    {
+      "id": "US-EN-17",
+      "side": "US",
+      "nameJa": "防御電子戦",
+      "family": "AF EW",
+      "use": "SINGLE",
+      "tags": [
+        "EW"
+      ],
+      "descriptionJa": "このATOの間、中国の攻撃判定はすべて不利。",
+      "action": {
+        "type": "modifier",
+        "mod": "ENEMY_ATTACK_DIS"
+      }
+    },
+    {
+      "id": "US-EN-18",
+      "side": "US",
+      "nameJa": "攻撃電子戦",
+      "family": "AF EW",
+      "use": "SINGLE",
+      "tags": [
+        "EW"
+      ],
+      "descriptionJa": "このATOの間、米の攻撃判定はすべて有利。",
+      "action": {
+        "type": "modifier",
+        "mod": "OWN_ATTACK_ADV"
+      }
+    },
+    {
+      "id": "US-EN-19",
+      "side": "US",
+      "nameJa": "空中発射デコイ",
+      "family": "AF EW",
+      "use": "SINGLE",
+      "tags": [
+        "EW"
+      ],
+      "descriptionJa": "中国の攻撃が命中した直後、または中国がミサイル防衛を宣言した直後に使う。それを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_HIT_OR_MD",
+        "effect": "CANCEL_HIT_OR_MD"
+      }
+    },
+    {
+      "id": "US-EN-20",
+      "side": "US",
+      "nameJa": "EC-130 コンパスコール",
+      "family": "AF EW",
+      "use": "SINGLE",
+      "tags": [
+        "EW",
+        "UNIT"
+      ],
+      "descriptionJa": "EC-130を任意の帯に1機発生させる。同じ帯からの中国の攻撃は不利。",
+      "action": {
+        "type": "generate",
+        "tokenType": "EC-130"
+      }
+    },
+    {
+      "id": "US-EN-21",
+      "side": "US",
+      "nameJa": "宇宙偵察",
+      "family": "JOINT NK",
+      "use": "MULTIPLE",
+      "tags": [
+        "SPACE"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ中国の駒を捕捉する。",
+      "action": {
+        "type": "acquireDice"
+      }
+    },
+    {
+      "id": "US-EN-22",
+      "side": "US",
+      "nameJa": "対宇宙",
+      "family": "JOINT NK",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE"
+      ],
+      "descriptionJa": "中国が宇宙カードを使った直後に使う。そのカードを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SPACE"
+      }
+    },
+    {
+      "id": "US-EN-23",
+      "side": "US",
+      "nameJa": "統合防御サイバー",
+      "family": "JOINT NK",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "中国のサイバー値を2下げる。",
+      "action": {
+        "type": "cyberDegrade",
+        "amount": 2
+      }
+    },
+    {
+      "id": "US-EN-24",
+      "side": "US",
+      "nameJa": "統合攻撃サイバー",
+      "family": "JOINT NK",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー値の2倍の数だけ中国の駒を盤上から除く。",
+      "action": {
+        "type": "removeTokens",
+        "multiplier": 2
+      }
+    },
+    {
+      "id": "US-EN-25",
+      "side": "US",
+      "nameJa": "宇宙配備電子戦",
+      "family": "JOINT NK",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE",
+        "EW"
+      ],
+      "descriptionJa": "このATOの間、中国の基地攻撃はすべて不利。",
+      "action": {
+        "type": "modifier",
+        "mod": "ENEMY_BASE_ATTACK_DIS"
+      }
+    },
+    {
+      "id": "US-EN-26",
+      "side": "US",
+      "nameJa": "地上配備ミサイル防衛",
+      "family": "BASE DEFENSE",
+      "use": "SINGLE",
+      "tags": [
+        "UNIT"
+      ],
+      "descriptionJa": "米の基地に防空(ADA)を1個発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "US-ADA",
+        "atBase": true
+      }
+    },
+    {
+      "id": "US-EN-27",
+      "side": "US",
+      "nameJa": "海上ミサイル防衛",
+      "family": "BASE DEFENSE",
+      "use": "SINGLE",
+      "tags": [
+        "UNIT",
+        "NAVAL"
+      ],
+      "descriptionJa": "駆逐艦(DDG 81)を任意の帯に発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "US-DDG"
+      }
+    },
+    {
+      "id": "US-EN-28",
+      "side": "US",
+      "nameJa": "レッドホース飛行隊",
+      "family": "BASE DEFENSE",
+      "use": "SINGLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "中国が米の基地かCLを攻撃した直後に使う。その攻撃の損害をすべて打ち消す。",
+      "response": {
+        "trigger": "ENEMY_BASE_DAMAGE",
+        "effect": "CANCEL_DAMAGE"
+      }
+    },
+    {
+      "id": "US-EN-29",
+      "side": "US",
+      "nameJa": "抗堪性のある基地",
+      "family": "BASE DEFENSE",
+      "use": "SINGLE",
+      "tags": [
+        "LOGISTICS"
+      ],
+      "descriptionJa": "中国が米の基地かCLを攻撃した直後に使う。その攻撃の損害をすべて打ち消す。",
+      "response": {
+        "trigger": "ENEMY_BASE_DAMAGE",
+        "effect": "CANCEL_DAMAGE"
+      }
+    },
+    {
+      "id": "US-EN-30",
+      "side": "US",
+      "nameJa": "歩兵大隊",
+      "family": "BASE DEFENSE",
+      "use": "SINGLE",
+      "tags": [
+        "UNIT"
+      ],
+      "descriptionJa": "このATOの間、米の基地とCLは中国の特殊作戦(SOF)の攻撃を受けない。",
+      "action": {
+        "type": "modifier",
+        "mod": "SOF_IMMUNE"
+      }
+    },
+    {
+      "id": "US-EN-31",
+      "side": "US",
+      "nameJa": "HIMARS",
+      "family": "NAVAL",
+      "use": "SINGLE",
+      "tags": [
+        "UNIT"
+      ],
+      "descriptionJa": "2以上で命中。命中したらD4の損害を中国の基地に与える。",
+      "action": {
+        "type": "baseStrike",
+        "hit": 2
+      }
+    },
+    {
+      "id": "US-EN-32",
+      "side": "US",
+      "nameJa": "トマホーク攻撃",
+      "family": "NAVAL",
+      "use": "SINGLE",
+      "tags": [
+        "UNIT",
+        "NAVAL"
+      ],
+      "descriptionJa": "駆逐艦(DDG 115)を任意の帯に発生させ、2以上で命中ならD4の損害を中国の基地に与える。",
+      "action": {
+        "type": "sequence",
+        "steps": [
+          {
+            "type": "generate",
+            "tokenType": "US-DDG"
+          },
+          {
+            "type": "baseStrike",
+            "hit": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "US-EN-33",
+      "side": "US",
+      "nameJa": "潜水艦攻撃",
+      "family": "NAVAL",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "SUBMARINE"
+      ],
+      "descriptionJa": "中国の水上艦1隻を自動で撃沈する。または、中国の潜水艦カードの直後に使って打ち消す。",
+      "action": {
+        "type": "destroyShip"
+      },
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SUBMARINE"
+      }
+    },
+    {
+      "id": "US-EN-34",
+      "side": "US",
+      "nameJa": "海兵沿岸連隊",
+      "family": "NAVAL",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "UNIT"
+      ],
+      "descriptionJa": "中国の水上艦1隻を自動で撃沈する。",
+      "action": {
+        "type": "destroyShip"
+      }
+    },
+    {
+      "id": "PRC-EN-01",
+      "side": "PRC",
+      "nameJa": "接近阻止・領域拒否",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "米が機動・整備カードを使った直後に使う。そのカードを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "LOGISTICS"
+      }
+    },
+    {
+      "id": "PRC-EN-02",
+      "side": "PRC",
+      "nameJa": "空中給油",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "態勢の上限とは別に、飛行隊を1枚基地に追加する。",
+      "action": {
+        "type": "extraSquadron"
+      }
+    },
+    {
+      "id": "PRC-EN-03",
+      "side": "PRC",
+      "nameJa": "予備役空軍",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "中国の飛行隊が機体をすべて失った直後に使う。その飛行隊を完全に再生する。",
+      "response": {
+        "trigger": "OWN_SQUADRON_DEPLETED",
+        "effect": "REGENERATE_SQUADRON"
+      }
+    },
+    {
+      "id": "PRC-EN-04",
+      "side": "PRC",
+      "nameJa": "無人機の増勢",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "中国の無人機の捕捉が失敗した直後に使う。失敗した捕捉を振り直す。",
+      "response": {
+        "trigger": "OWN_UAS_ACQUIRE_FAILED",
+        "effect": "REROLL_ACQUIRE"
+      }
+    },
+    {
+      "id": "PRC-EN-05",
+      "side": "PRC",
+      "nameJa": "精鋭パイロット",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "次の中国の空対空攻撃は有利。",
+      "action": {
+        "type": "modifier",
+        "mod": "NEXT_AIR_TO_AIR_ADV"
+      }
+    },
+    {
+      "id": "PRC-EN-06",
+      "side": "PRC",
+      "nameJa": "地上配備レーダー",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ米の駒を捕捉する。",
+      "action": {
+        "type": "acquireDice"
+      }
+    },
+    {
+      "id": "PRC-EN-07",
+      "side": "PRC",
+      "nameJa": "H-6K の集中運用",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "このATOの間、H-6Kの判定は有利。",
+      "action": {
+        "type": "modifier",
+        "mod": "H6K_ADV"
+      }
+    },
+    {
+      "id": "PRC-EN-08",
+      "side": "PRC",
+      "nameJa": "特殊任務機",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ米の駒を捕捉する。",
+      "action": {
+        "type": "acquireDice"
+      }
+    },
+    {
+      "id": "PRC-EN-09",
+      "side": "PRC",
+      "nameJa": "空軍SOF偵察",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ米の駒を捕捉する。",
+      "action": {
+        "type": "acquireDice"
+      }
+    },
+    {
+      "id": "PRC-EN-10",
+      "side": "PRC",
+      "nameJa": "弾薬改良",
+      "family": "PLAAF",
+      "use": "SINGLE",
+      "tags": [
+        "PLAAF"
+      ],
+      "descriptionJa": "このATOの間、戦闘機の飛行隊1個の空対空射程が4になる。",
+      "action": {
+        "type": "airRangeUpgrade",
+        "range": 4
+      }
+    },
+    {
+      "id": "PRC-EN-11",
+      "side": "PRC",
+      "nameJa": "弾道ミサイル攻撃",
+      "family": "PLARF",
+      "use": "SINGLE",
+      "tags": [
+        "PLARF"
+      ],
+      "descriptionJa": "2以上で命中。命中したらD4の損害を米の基地に与える。",
+      "action": {
+        "type": "baseStrike",
+        "hit": 2
+      }
+    },
+    {
+      "id": "PRC-EN-12",
+      "side": "PRC",
+      "nameJa": "対地巡航ミサイル",
+      "family": "PLARF",
+      "use": "SINGLE",
+      "tags": [
+        "PLARF"
+      ],
+      "descriptionJa": "2以上で命中。命中したらD4の損害を米の基地に与える。",
+      "action": {
+        "type": "baseStrike",
+        "hit": 2
+      }
+    },
+    {
+      "id": "PRC-EN-13",
+      "side": "PRC",
+      "nameJa": "対艦巡航ミサイル",
+      "family": "PLARF",
+      "use": "SINGLE",
+      "tags": [
+        "PLARF"
+      ],
+      "descriptionJa": "防げない。米の水上艦1隻を即座に撃沈する。",
+      "action": {
+        "type": "destroyShip"
+      }
+    },
+    {
+      "id": "PRC-EN-14",
+      "side": "PRC",
+      "nameJa": "極超音速ミサイル",
+      "family": "PLARF",
+      "use": "SINGLE",
+      "tags": [
+        "PLARF"
+      ],
+      "descriptionJa": "防げない。D4の損害を米の基地に与える。",
+      "action": {
+        "type": "baseStrike",
+        "unblockable": true
+      }
+    },
+    {
+      "id": "PRC-EN-15",
+      "side": "PRC",
+      "nameJa": "囮弾頭",
+      "family": "PLARF",
+      "use": "SINGLE",
+      "tags": [
+        "PLARF"
+      ],
+      "descriptionJa": "米がミサイル防衛を宣言した直後に使う。それを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_MD",
+        "effect": "CANCEL_MD"
+      }
+    },
+    {
+      "id": "PRC-EN-16",
+      "side": "PRC",
+      "nameJa": "サイバー浸透",
+      "family": "PLASSF",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER",
+        "PLASSF"
+      ],
+      "descriptionJa": "サイバー判定を1回行う。",
+      "action": {
+        "type": "cyberAttempt"
+      }
+    },
+    {
+      "id": "PRC-EN-17",
+      "side": "PRC",
+      "nameJa": "攻撃的サイバー作戦",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER",
+        "PLASSF"
+      ],
+      "descriptionJa": "サイバー値の数だけ米の駒を盤上から除く。または、米に同じ数の支援カードを捨てさせる。",
+      "action": {
+        "type": "choice",
+        "options": [
+          {
+            "type": "removeTokens",
+            "multiplier": 1
+          },
+          {
+            "type": "forceDiscard"
+          }
+        ],
+        "labelsJa": [
+          "駒を除く",
+          "手札を捨てさせる"
+        ]
+      }
+    },
+    {
+      "id": "PRC-EN-18",
+      "side": "PRC",
+      "nameJa": "防御的サイバー作戦",
+      "family": "PLASSF",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER",
+        "PLASSF"
+      ],
+      "descriptionJa": "米のサイバー値を1下げる。または、米のサイバーカードの直後に使って打ち消す。",
+      "action": {
+        "type": "cyberDegrade",
+        "amount": 1
+      },
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "CYBER"
+      }
+    },
+    {
+      "id": "PRC-EN-19",
+      "side": "PRC",
+      "nameJa": "サイバー作戦",
+      "family": "PLASSF",
+      "use": "MULTIPLE",
+      "tags": [
+        "CYBER",
+        "PLASSF"
+      ],
+      "descriptionJa": "サイバー値の数だけ米の駒を捕捉する。",
+      "action": {
+        "type": "acquireCyber",
+        "multiplier": 1
+      }
+    },
+    {
+      "id": "PRC-EN-20",
+      "side": "PRC",
+      "nameJa": "サイバー対無人機",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "CYBER",
+        "PLASSF"
+      ],
+      "descriptionJa": "サイバー値の数だけ米の無人機を撃破する。",
+      "action": {
+        "type": "destroyUas"
+      }
+    },
+    {
+      "id": "PRC-EN-21",
+      "side": "PRC",
+      "nameJa": "宇宙配備電子戦",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE",
+        "EW",
+        "PLASSF"
+      ],
+      "descriptionJa": "このATOの間、米の攻撃判定(基地と駒の両方)はすべて不利。",
+      "action": {
+        "type": "modifier",
+        "mod": "ENEMY_ATTACK_DIS"
+      }
+    },
+    {
+      "id": "PRC-EN-22",
+      "side": "PRC",
+      "nameJa": "衛星網の再建",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE",
+        "PLASSF"
+      ],
+      "descriptionJa": "使用済みの戦略支援部隊(PLASSF)カードを1枚手札に戻す。",
+      "action": {
+        "type": "returnSpent",
+        "tag": "PLASSF"
+      }
+    },
+    {
+      "id": "PRC-EN-23",
+      "side": "PRC",
+      "nameJa": "対宇宙",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE",
+        "PLASSF"
+      ],
+      "descriptionJa": "米が宇宙カードを使った直後に使う。そのカードを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SPACE"
+      }
+    },
+    {
+      "id": "PRC-EN-24",
+      "side": "PRC",
+      "nameJa": "衛星攻撃",
+      "family": "PLASSF",
+      "use": "SINGLE",
+      "tags": [
+        "SPACE",
+        "PLASSF"
+      ],
+      "descriptionJa": "米が宇宙カードを使った直後に使う。そのカードを打ち消す。",
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SPACE"
+      }
+    },
+    {
+      "id": "PRC-EN-25",
+      "side": "PRC",
+      "nameJa": "宇宙偵察",
+      "family": "PLASSF",
+      "use": "MULTIPLE",
+      "tags": [
+        "SPACE",
+        "PLASSF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ米の駒を捕捉する。",
+      "action": {
+        "type": "acquireDice"
+      }
+    },
+    {
+      "id": "PRC-EN-26",
+      "side": "PRC",
+      "nameJa": "空母山東の航空隊",
+      "family": "PLAN",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "UNIT"
+      ],
+      "descriptionJa": "J-15を4機、任意の帯に発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "J-15",
+        "count": 4
+      }
+    },
+    {
+      "id": "PRC-EN-27",
+      "side": "PRC",
+      "nameJa": "055型駆逐艦",
+      "family": "PLAN",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "UNIT"
+      ],
+      "descriptionJa": "055型駆逐艦を任意の帯に発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "PRC-CG"
+      }
+    },
+    {
+      "id": "PRC-EN-28",
+      "side": "PRC",
+      "nameJa": "052D型駆逐艦",
+      "family": "PLAN",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "UNIT"
+      ],
+      "descriptionJa": "052D型駆逐艦を任意の帯に発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "PRC-DDG"
+      }
+    },
+    {
+      "id": "PRC-EN-29",
+      "side": "PRC",
+      "nameJa": "ミサイル艇隊",
+      "family": "PLAN",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "UNIT"
+      ],
+      "descriptionJa": "022型ミサイル艇隊を任意の帯に発生させる。",
+      "action": {
+        "type": "generate",
+        "tokenType": "PRC-FAC"
+      }
+    },
+    {
+      "id": "PRC-EN-30",
+      "side": "PRC",
+      "nameJa": "通常動力潜水艦攻撃",
+      "family": "PLAN",
+      "use": "SINGLE",
+      "tags": [
+        "NAVAL",
+        "SUBMARINE"
+      ],
+      "descriptionJa": "米の水上艦1隻を自動で撃沈する。または、米の潜水艦カードの直後に使って打ち消す。",
+      "action": {
+        "type": "destroyShip"
+      },
+      "response": {
+        "trigger": "ENEMY_CARD_TAG",
+        "effect": "CANCEL_CARD",
+        "tag": "SUBMARINE"
+      }
+    },
+    {
+      "id": "PRC-EN-31",
+      "side": "PRC",
+      "nameJa": "蛟龍突撃隊",
+      "family": "SOF",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "D4の損害を米の基地に与える(ミサイル防衛は効かない)。",
+      "action": {
+        "type": "baseStrike",
+        "sof": true
+      }
+    },
+    {
+      "id": "PRC-EN-32",
+      "side": "PRC",
+      "nameJa": "海軍陸戦隊の襲撃",
+      "family": "SOF",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "D4の損害を米の基地に与える(ミサイル防衛は効かない)。",
+      "action": {
+        "type": "baseStrike",
+        "sof": true
+      }
+    },
+    {
+      "id": "PRC-EN-33",
+      "side": "PRC",
+      "nameJa": "SOFサイバー浸透",
+      "family": "SOF",
+      "use": "SINGLE",
+      "tags": [
+        "SOF",
+        "CYBER"
+      ],
+      "descriptionJa": "サイバー判定を1回行う。",
+      "action": {
+        "type": "cyberAttempt"
+      }
+    },
+    {
+      "id": "PRC-EN-34",
+      "side": "PRC",
+      "nameJa": "SOF偵察",
+      "family": "SOF",
+      "use": "SINGLE",
+      "tags": [
+        "SOF"
+      ],
+      "descriptionJa": "D4を振り、出目の数だけ米の駒を捕捉する。出目4ならサイバー値も+1。",
+      "action": {
+        "type": "acquireDice",
+        "cyberOn4": true
+      }
+    }
+  ]
+}

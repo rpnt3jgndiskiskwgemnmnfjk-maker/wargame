@@ -1,0 +1,11 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+*.keystore
+*.jks
+
+# 署名鍵（絶対に commit しない）
+.signing/
