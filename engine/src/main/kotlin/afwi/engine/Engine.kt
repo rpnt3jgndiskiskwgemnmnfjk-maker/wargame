@@ -71,7 +71,9 @@ class Engine(
     fun enablerPool(s: GameState, side: Side): List<EnablerDef> {
         val p = s.player(side)
         val posture = p.posture?.let { content.posture(it) }
+        val campaign = content.campaign(s.campaignId)
         return content.enablers.filter { it.side == side && it.id !in p.spent }
+            .filter { c -> c.id !in campaign.bannedEnablers && c.tags.none { it in campaign.bannedEnablerTags } }
             .filter { posture == null || PostureEffect.PLAAF_ENABLERS_ONLY !in posture.effects || it.family == "PLAAF" }
     }
 
@@ -182,8 +184,9 @@ class Engine(
 
     private fun draftOptions(s: GameState, side: Side): List<Action> {
         val posture = content.posture(s.player(side).posture ?: return emptyList())
+        val banned = content.campaign(s.campaignId).bannedSquadrons
         val available = s.squadrons.values
-            .filter { it.owner == side && !it.isDestroyed && hasLiveTokens(s, it.id) }
+            .filter { it.owner == side && !it.isDestroyed && hasLiveTokens(s, it.id) && it.defId !in banned }
             .filter { PostureEffect.FLYING_ONLY !in posture.effects || content.squadron(it.defId).flying }
             .map { it.id }
         val (free, normal) = available.partition { id -> s.squadrons.getValue(id).defId in posture.freeSquadrons }
@@ -324,6 +327,7 @@ class Engine(
             .map { EffectParams(option, it.id, null) }
         is Effect.ExtraSquadron -> s.squadrons.values
             .filter { it.owner == side && !it.drafted && !it.isDestroyed && hasLiveTokens(s, it.id) }
+            .filter { it.defId !in content.campaign(s.campaignId).bannedSquadrons }
             .map { EffectParams(option, it.id, null) }
         is Effect.ReturnSpent -> s.player(side).spent
             .filter { effect.tag == null || effect.tag in content.enabler(it).tags }

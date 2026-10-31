@@ -57,9 +57,14 @@ fun AfwiApp(vm: GameViewModel = viewModel()) {
         Surface(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 val game = ui.game
-                if (game == null || ui.screen == Screen.HOME) {
+                if (ui.screen == Screen.SETTINGS) {
+                    SettingsScreen(ui.settings, vm::updateSettings, vm::backToHome)
+                } else if (game == null || ui.screen == Screen.HOME) {
                     HomeScreen(
                         engine = vm.engine,
+                        hasSave = ui.hasSave,
+                        onResume = vm::resume,
+                        onSettings = vm::openSettings,
                         onHotseat = { campaign -> vm.newHotseatGame(campaign) },
                         onCpu = { campaign, side, difficulty -> vm.newCpuGame(campaign, side, difficulty) },
                     )
@@ -92,6 +97,9 @@ private fun modeLabel(mode: Mode): String = when (mode) {
 @Composable
 private fun HomeScreen(
     engine: Engine,
+    hasSave: Boolean,
+    onResume: () -> Unit,
+    onSettings: () -> Unit,
     onHotseat: (String) -> Unit,
     onCpu: (String, Side, Difficulty) -> Unit,
 ) {
@@ -105,12 +113,17 @@ private fun HomeScreen(
     ) {
         Text("AFWI", fontSize = 40.sp, fontWeight = FontWeight.Bold)
         Text("Air Force Wargame: Indo-Pacific(非公式アプリ)", style = MaterialTheme.typography.titleMedium)
+        if (hasSave) {
+            Button(onClick = onResume, modifier = Modifier.fillMaxWidth()) { Text("続きから遊ぶ(自動保存した対局)") }
+        }
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("キャンペーン", fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (c in engine.content.campaigns) {
-                        ToggleButton(selected = c.id == campaignId, label = c.nameJa, onClick = { campaignId = c.id })
+                for (row in engine.content.campaigns.chunked(3)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (c in row) {
+                            ToggleButton(selected = c.id == campaignId, label = c.nameJa, onClick = { campaignId = c.id })
+                        }
                     }
                 }
                 Text("${campaign.nameJa}(ATO ${campaign.atoCount}回)", fontWeight = FontWeight.Bold)
@@ -142,10 +155,53 @@ private fun HomeScreen(
         OutlinedButton(onClick = { onHotseat(campaignId) }, modifier = Modifier.fillMaxWidth()) {
             Text("ホットシートで対局を始める(1台を交代で使う)")
         }
+        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth()) { Text("ルール設定") }
         Text(
-            "現在の版: 遭遇戦・大会・長期戦を遊べます。キャンペーン4・5は今後の版で追加します。",
+            "新しく対局を始めると、自動保存した対局は上書きされます。",
             style = MaterialTheme.typography.bodySmall,
         )
+    }
+}
+
+@Composable
+private fun SettingsScreen(settings: AppSettings, onChange: (AppSettings) -> Unit, onBack: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text("ルール設定", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "公式ルールで確認できなかった部分を選べます。変更は次に始める対局から反映されます(続きから遊ぶ対局は、保存したときの設定のまま)。",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        SettingRow("艦艇の耐久(何命中で沈むか)", "公式は未確認。ファン実装は3。") {
+            for (v in listOf(1, 3)) ToggleButton(settings.shipHp == v, "${v}命中") { onChange(settings.copy(shipHp = v)) }
+        }
+        SettingRow("基地施設の損害ブロック1つの勝利点", "公式は未確認。") {
+            for (v in listOf(0, 1, 2)) ToggleButton(settings.airbaseBlockVp == v, "${v}点") { onChange(settings.copy(airbaseBlockVp = v)) }
+        }
+        SettingRow("弾切れで帰投した機体の再発進", "同じ ATO 中に補給して再発進できるか(解釈)。") {
+            ToggleButton(settings.rtbRearm, "できる") { onChange(settings.copy(rtbRearm = true)) }
+            ToggleButton(!settings.rtbRearm, "できない") { onChange(settings.copy(rtbRearm = false)) }
+        }
+        SettingRow("CPU の速さ", "CPU が1手ごとに待つ時間。") {
+            for ((label, ms) in listOf("速い" to 200L, "普通" to 600L, "ゆっくり" to 1200L)) {
+                ToggleButton(settings.cpuDelayMs == ms, label) { onChange(settings.copy(cpuDelayMs = ms)) }
+            }
+        }
+        OutlinedButton(onClick = { onChange(AppSettings()) }, modifier = Modifier.fillMaxWidth()) { Text("初期値に戻す") }
+        Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("ホームへ戻る") }
+    }
+}
+
+@Composable
+private fun SettingRow(title: String, note: String, options: @Composable () -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, fontWeight = FontWeight.Bold)
+            Text(note, style = MaterialTheme.typography.bodySmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { options() }
+        }
     }
 }
 

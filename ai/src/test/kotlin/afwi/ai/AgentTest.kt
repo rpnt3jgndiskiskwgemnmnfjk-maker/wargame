@@ -84,4 +84,22 @@ class AgentTest {
         assertTrue(usRate >= 0.7, "US win rate $usRate")
         assertTrue(prcRate >= 0.7, "PRC win rate $prcRate")
     }
+
+    @Test
+    fun `the world watches and reserves games finish and normal AI beats a random player`() {
+        for (campaign in listOf("C4", "C5")) {
+            repeat(20) { i ->
+                val r = Match.play(
+                    engine, campaign, seed = i.toLong(),
+                    agents = mapOf(Side.US to HeuristicAgent(engine, seed = i.toLong()), Side.PRC to HeuristicAgent(engine, Difficulty.EASY, i.toLong())),
+                    maxSteps = 20000,
+                )
+                assertTrue(r.finished, "$campaign seed $i did not finish in ${r.steps} steps")
+            }
+            val usRate = winRate({ mapOf(Side.US to HeuristicAgent(engine, seed = it), Side.PRC to RandomAgent(it)) }, Side.US, 30, campaign)
+            val prcRate = winRate({ mapOf(Side.US to RandomAgent(it), Side.PRC to HeuristicAgent(engine, seed = it)) }, Side.PRC, 30, campaign)
+            println("$campaign normal vs random: US $usRate / PRC $prcRate")
+            assertTrue(usRate >= 0.7 && prcRate >= 0.7, "$campaign win rates $usRate / $prcRate")
+        }
+    }
 }

@@ -201,9 +201,14 @@ internal class Work(private val e: Engine, s: GameState) {
     }
 
     private fun enterInitiative() {
+        val kills = Side.entries.associateWith { side -> p(side).captured.count { it.kind == CaptureKind.TOKEN } }
         if (campaign.bidRule == BidRule.FIRST_ATO_ONLY_ALTERNATE && initiativeHistory.isNotEmpty()) {
             // 大会: 第2 ATO 以降は、前の ATO で主導権を持たなかった側が主導権を持つ
             grantInitiative(initiativeHistory.last().opponent, "大会のルールで主導権が移った")
+        } else if (campaign.bidRule == BidRule.LEADER_AFTER_FIRST && ato > 1 && kills.getValue(Side.US) != kills.getValue(Side.PRC)) {
+            // 世界が見ている: 撃破数で上回る側に国際世論が傾き、主導権を得る
+            val leader = if (kills.getValue(Side.US) > kills.getValue(Side.PRC)) Side.US else Side.PRC
+            grantInitiative(leader, "撃破数 米${kills.getValue(Side.US)}・中${kills.getValue(Side.PRC)} で国際世論が傾いた")
         } else {
             phase = Phase.BID
             publicEvent("主導権の入札へ")
@@ -1031,6 +1036,10 @@ internal class Work(private val e: Engine, s: GameState) {
         val pl = p(side)
         val mission = pl.mission
         var vp = pl.captured.filter { it.ato == ato }.sumOf { e.recordVp(mission, it) }
+        if (campaign.airKillBonusPerAto > 0) {
+            // 世界が見ている: 空中での撃破1機につき +1（ATO ごとに上限あり）
+            vp += min(campaign.airKillBonusPerAto, pl.captured.count { it.ato == ato && it.kind == CaptureKind.TOKEN && it.inAir })
+        }
         val plays = pl.cardPlays.filter { it.ato == ato }.map { card(it.cardId) }
         val drafted = squadrons.values.filter { it.owner == side && it.drafted }
         vp += when (mission) {
@@ -1073,6 +1082,16 @@ internal class Work(private val e: Engine, s: GameState) {
     }
 
     private fun finishGame() {
+        if (campaign.intactSquadronBonus) {
+            // 予備戦力: 無傷の飛行隊カード（損害なし）1枚につき +1。使えない飛行隊は数えない
+            for (side in Side.entries) {
+                val intact = squadrons.values.count {
+                    it.owner == side && it.damage == 0 && it.defId !in campaign.bannedSquadrons
+                }
+                updatePlayer(side) { it.copy(vp = it.vp + intact) }
+                privateEvent(side, "無傷の飛行隊カード${intact}枚で +$intact VP(累計${p(side).vp})")
+            }
+        }
         val vu = p(Side.US).vp
         val vp = p(Side.PRC).vp
         val w = when {

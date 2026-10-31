@@ -125,6 +125,9 @@ enum class BidRule {
 
     /** 入札は第1 ATO だけで、支援カードを差し出せない。以後は主導権を交互に持つ（大会）。 */
     FIRST_ATO_ONLY_ALTERNATE,
+
+    /** 第2 ATO 以降は、それまでに多く撃破した側が主導権を得る。同数なら入札（世界が見ている）。 */
+    LEADER_AFTER_FIRST,
 }
 
 @Serializable
@@ -142,6 +145,15 @@ data class CampaignDef(
     /** 選べる態勢の種類。null ならすべて。 */
     val allowedPostures: List<PostureKind>? = null,
     val bidRule: BidRule = BidRule.EVERY_ATO,
+    /** 使えない飛行隊。 */
+    val bannedSquadrons: List<String> = emptyList(),
+    /** 使えない支援カード（タグ指定と個別指定）。 */
+    val bannedEnablerTags: List<String> = emptyList(),
+    val bannedEnablers: List<String> = emptyList(),
+    /** 空中で撃破した敵1機につき +1（ATO ごとにこの数まで）。0 なら無効。 */
+    val airKillBonusPerAto: Int = 0,
+    /** キャンペーン終了時に、無傷の飛行隊カード1枚につき +1。 */
+    val intactSquadronBonus: Boolean = false,
 )
 
 @Serializable

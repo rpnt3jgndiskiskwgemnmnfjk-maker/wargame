@@ -4,12 +4,16 @@ import afwi.ai.Agent
 import afwi.ai.Difficulty
 import afwi.ai.HeuristicAgent
 import afwi.engine.Action
+import afwi.engine.Content
 import afwi.engine.Engine
 import afwi.engine.GameState
 import afwi.engine.Phase
+import afwi.engine.SavedGame
 import afwi.engine.Side
+import afwi.engine.save
 import afwi.engine.viewFor
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,9 +23,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.random.Random
 
-enum class Screen { HOME, HANDOFF, PLAY, RESULT }
+enum class Screen { HOME, SETTINGS, HANDOFF, PLAY, RESULT }
 
 /** 対局の形式。CPU のときは人間側の陣営と難易度を持つ。 */
 sealed interface Mode {
@@ -40,13 +45,25 @@ data class UiState(
     val selectedTokenId: String? = null,
     val cpuThinking: Boolean = false,
     val error: String? = null,
+    /** 続きから再開できる保存データがある。 */
+    val hasSave: Boolean = false,
+    val settings: AppSettings = AppSettings(),
 )
 
-/** 対局の進行。ルールはすべて Engine に、CPU の判断は Agent に任せ、ここでは順番と画面だけを決める。 */
-class GameViewModel : ViewModel() {
-    val engine = Engine()
+/**
+ * 対局の進行。ルールはすべて Engine に、CPU の判断は Agent に任せ、ここでは順番・画面・保存だけを決める。
+ * 行動を1つ確定するたびに対局を端末内に自動保存し、アプリを閉じても続きから遊べるようにする。
+ */
+class GameViewModel(app: Application) : AndroidViewModel(app) {
+    private val content = Content.loadBundled()
+    private val settingsStore = SettingsStore(app)
+    private val saveFile = File(app.filesDir, "save.json")
 
-    private val _ui = MutableStateFlow(UiState())
+    /** 対局ごとに、そのときのルール設定で作り直す。 */
+    var engine = Engine(content)
+        private set
+
+    private val _ui = MutableStateFlow(UiState(hasSave = loadSave() != null, settings = settingsStore.load()))
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     private var cpuAgent: Agent? = null
@@ -54,19 +71,64 @@ class GameViewModel : ViewModel() {
 
     fun newHotseatGame(campaignId: String) {
         cancelCpu()
+        engine = Engine(content, _ui.value.settings.toRules())
         val game = engine.newGame(campaignId, Random.nextLong())
-        _ui.value = UiState(screen = Screen.HANDOFF, mode = Mode.Hotseat, game = game, holder = engine.actors(game).first())
+        _ui.value = UiState(
+            screen = Screen.HANDOFF, mode = Mode.Hotseat, game = game, holder = engine.actors(game).first(),
+            settings = _ui.value.settings,
+        )
+        persist()
     }
 
     fun newCpuGame(campaignId: String, humanSide: Side, difficulty: Difficulty) {
         cancelCpu()
+        engine = Engine(content, _ui.value.settings.toRules())
         val seed = Random.nextLong()
         cpuAgent = HeuristicAgent(engine, difficulty, seed)
         val game = engine.newGame(campaignId, seed)
         _ui.value = UiState(
             screen = Screen.PLAY, mode = Mode.VsCpu(humanSide, difficulty), game = game, holder = humanSide,
+            settings = _ui.value.settings,
         )
+        persist()
         runCpuIfNeeded()
+    }
+
+    /** 保存データから続きを始める。 */
+    fun resume() {
+        val saved = loadSave() ?: run {
+            _ui.value = _ui.value.copy(hasSave = false)
+            return
+        }
+        cancelCpu()
+        engine = Engine(content, saved.rules)
+        val game = saved.state
+        val mode = if (saved.meta["mode"] == "cpu") {
+            val human = Side.valueOf(saved.meta["human"] ?: "US")
+            val difficulty = Difficulty.valueOf(saved.meta["difficulty"] ?: "NORMAL")
+            cpuAgent = HeuristicAgent(engine, difficulty, Random.nextLong())
+            Mode.VsCpu(human, difficulty)
+        } else {
+            Mode.Hotseat
+        }
+        _ui.value = when (mode) {
+            is Mode.VsCpu -> UiState(screen = Screen.PLAY, mode = mode, game = game, holder = mode.humanSide, settings = _ui.value.settings)
+            // ホットシートは、隠し情報を見せないよう受け渡し画面から始める
+            is Mode.Hotseat -> UiState(
+                screen = Screen.HANDOFF, mode = mode, game = game,
+                holder = engine.actors(game).firstOrNull() ?: Side.US, settings = _ui.value.settings,
+            )
+        }
+        runCpuIfNeeded()
+    }
+
+    fun openSettings() {
+        _ui.value = _ui.value.copy(screen = Screen.SETTINGS)
+    }
+
+    fun updateSettings(settings: AppSettings) {
+        settingsStore.save(settings)
+        _ui.value = _ui.value.copy(settings = settings)
     }
 
     fun confirmHandoff() {
@@ -94,6 +156,7 @@ class GameViewModel : ViewModel() {
                 runCpuIfNeeded()
             }
         }
+        persist()
     }
 
     private fun afterHotseatAction(current: UiState, next: GameState) {
@@ -129,16 +192,51 @@ class GameViewModel : ViewModel() {
                 val game = state.game ?: break
                 if (game.phase == Phase.GAME_OVER || mode.cpuSide !in engine.actors(game)) break
                 _ui.value = state.copy(cpuThinking = true)
-                delay(CPU_STEP_DELAY_MS)
+                delay(state.settings.cpuDelayMs)
                 // CPU には CPU 側の視点だけを渡す
                 val view = engine.viewFor(game, mode.cpuSide)
                 val action = withContext(Dispatchers.Default) { agent.choose(view) }
                 val next = engine.apply(game, action)
                 _ui.value = afterAction(_ui.value, next).copy(cpuThinking = next.phase != Phase.GAME_OVER)
+                persist()
             }
             _ui.value = _ui.value.copy(cpuThinking = false)
         }
     }
+
+    // ---- 保存 ----
+
+    private fun loadSave(): SavedGame? =
+        runCatching { saveFile.readText() }.getOrNull()?.let { SavedGame.decodeOrNull(it, content) }
+
+    /** 対局中なら保存し、終わっていれば保存データを消す。 */
+    private fun persist() {
+        val state = _ui.value
+        val game = state.game ?: return
+        val text = if (game.phase == Phase.GAME_OVER) {
+            null
+        } else {
+            val meta = when (val m = state.mode) {
+                is Mode.Hotseat -> mapOf("mode" to "hotseat")
+                is Mode.VsCpu -> mapOf("mode" to "cpu", "human" to m.humanSide.name, "difficulty" to m.difficulty.name)
+            }
+            engine.save(game, meta)
+        }
+        _ui.value = state.copy(hasSave = text != null)
+        val seq = ++saveSeq
+        viewModelScope.launch(Dispatchers.IO) {
+            // 書き込みが前後しても、最後に確定した状態だけを残す
+            synchronized(saveLock) {
+                if (seq != saveSeq) return@synchronized
+                runCatching { if (text == null) saveFile.delete() else saveFile.writeText(text) }
+            }
+        }
+    }
+
+    private val saveLock = Any()
+
+    @Volatile
+    private var saveSeq = 0
 
     private fun cancelCpu() {
         cpuJob?.cancel()
@@ -148,10 +246,6 @@ class GameViewModel : ViewModel() {
 
     fun backToHome() {
         cancelCpu()
-        _ui.value = UiState()
-    }
-
-    private companion object {
-        const val CPU_STEP_DELAY_MS = 600L
+        _ui.value = UiState(hasSave = loadSave() != null || _ui.value.hasSave, settings = _ui.value.settings)
     }
 }

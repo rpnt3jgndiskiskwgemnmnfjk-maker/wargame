@@ -634,6 +634,45 @@
       "descriptionJa": "5 ATO。ミッション・態勢・支援カードをすべて使う。資源を配分しないと5 ATO目には枯渇する。",
       "atoCount": 5,
       "enablers": true
+    },
+    {
+      "id": "C4",
+      "nameJa": "世界が見ている",
+      "descriptionJa": "2 ATO。国際世論を意識した戦い。長距離ミサイルと特殊作戦の支援カード、長距離爆撃機の飛行隊は使えない。空中で撃破した敵1機につき +1(ATO ごとに最大 +2)。第2 ATO は第1 ATO で多く撃破した側が主導権を得る。",
+      "atoCount": 2,
+      "enablers": true,
+      "bannedSquadrons": [
+        "US-SQ-69BS",
+        "US-SQ-23BS",
+        "PRC-SQ-H6K"
+      ],
+      "bannedEnablerTags": [
+        "SOF",
+        "PLARF"
+      ],
+      "bannedEnablers": [
+        "US-EN-31",
+        "US-EN-32"
+      ],
+      "airKillBonusPerAto": 2,
+      "bidRule": "LEADER_AFTER_FIRST"
+    },
+    {
+      "id": "C5",
+      "nameJa": "予備戦力",
+      "descriptionJa": "2 ATO。長引いた戦いで戦力が減った状態。第5世代機と爆撃機は使えず、中国は長距離の防空(SA-21)も使えない。キャンペーン終了時に無傷の飛行隊カード1枚につき +1。",
+      "atoCount": 2,
+      "enablers": true,
+      "bannedSquadrons": [
+        "US-SQ-90FS",
+        "US-SQ-34FS",
+        "US-SQ-69BS",
+        "US-SQ-23BS",
+        "PRC-SQ-J20",
+        "PRC-SQ-H6K",
+        "PRC-SQ-SA21"
+      ],
+      "intactSquadronBonus": true
     }
   ],
   "postures": [
